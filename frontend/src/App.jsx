@@ -174,17 +174,19 @@ function App() {
           role="status"
           aria-live="polite"
         >
-          <span className="font-mono">API Calls: {usageStats.total_calls || 0}</span>
+          <span className="font-mono">API Calls: {usageStats.total_requests || 0}</span>
           <span className="mx-2 text-gray-7">|</span>
-          <span className="font-mono">Cost: ${(usageStats.estimated_cost || 0).toFixed(4)}</span>
+          <span className="font-mono">Latency: {(usageStats.avg_latency_per_request || 0).toFixed(0)}ms avg</span>
           <span className="mx-2 text-gray-7">|</span>
           <span className="font-mono">Tokens: {usageStats.total_tokens || 0}</span>
+          <span className="mx-2 text-gray-7">|</span>
+          <span className="font-mono text-green-400">100% Privacy (Local)</span>
         </div>
       )}
 
       {/* Footer - Vercel Black */}
       <footer className="bg-black text-gray-7 text-center py-4 text-copy-13 border-t border-gray-3">
-        <p>FindingExcellence PRO 2.0 | Powered by OpenRouter AI &amp; Electron</p>
+        <p>FindingExcellence PRO 2.0 | Powered by Local AI (Ollama + Qwen2.5-VL) &amp; Electron | 100% Privacy</p>
       </footer>
     </div>
   );

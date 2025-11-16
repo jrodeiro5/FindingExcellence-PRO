@@ -21,9 +21,9 @@ pytesseract>=0.3.10
 pdf2image>=1.17.0
 Pillow>=10.2.0
 
-# AI Integration - OpenRouter
-openai>=1.12.0
-httpx>=0.26.0
+# AI Integration - Local Ollama (100% privacy, no external APIs)
+ollama>=0.1.0
+requests>=2.31.0
 python-dotenv>=1.0.0
 
 # Utilities

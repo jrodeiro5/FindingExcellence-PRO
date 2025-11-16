@@ -1,15 +1,17 @@
 """FastAPI backend for FindingExcellence_PRO"""
-import os, logging
+import logging
+import os
+from typing import List, Optional
+
+from ai.ai_services import AISearchService
+from core.content_search import ContentSearch
+from core.file_search import FileSearch
+from core.pdf_processor import PDFProcessor
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
-from dotenv import load_dotenv
-from core.file_search import FileSearch
-from core.content_search import ContentSearch
-from core.pdf_processor import PDFProcessor
 from utils.logging_setup import setup_logging
-from ai.ai_services import AISearchService
 
 load_dotenv()
 logger = setup_logging()
@@ -30,14 +32,16 @@ app.add_middleware(
 file_search = FileSearch()
 content_search = ContentSearch()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+# Initialize Ollama-based AI service (100% local, no external API calls)
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 ai_service = None
-if OPENROUTER_API_KEY:
-    try:
-        ai_service = AISearchService(OPENROUTER_API_KEY)
-        logger.info("AI service initialized")
-    except Exception as e:
-        logger.warning(f"AI init failed: {e}")
+try:
+    ai_service = AISearchService(ollama_host=OLLAMA_HOST)
+    logger.info(f"AI service initialized with Ollama at {OLLAMA_HOST}")
+except ConnectionError as e:
+    logger.warning(f"Ollama not available: {e}. Running without AI features.")
+except Exception as e:
+    logger.warning(f"AI init failed: {e}")
 
 class FileSearchRequest(BaseModel):
     keywords: List[str]
@@ -60,6 +64,10 @@ class NaturalLanguageSearchRequest(BaseModel):
 class AIAnalysisRequest(BaseModel):
     content: str
     analysis_type: str = "summary"
+
+class OCRRequest(BaseModel):
+    image_url: str
+    extract_tables: bool = False
 
 @app.get("/")
 async def root():
@@ -129,6 +137,18 @@ async def analyze_file(request: AIAnalysisRequest):
         result = ai_service.analyze_document(request.content, request.analysis_type)
         return result
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ocr")
+async def ocr_image(request: OCRRequest):
+    """Extract text from images using vision models (Qwen2.5-VL)"""
+    if not ai_service:
+        raise HTTPException(status_code=503, detail="AI service not available")
+    try:
+        result = ai_service.ocr_from_image(request.image_url, request.extract_tables)
+        return result
+    except Exception as e:
+        logger.error(f"OCR failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/usage/stats")
