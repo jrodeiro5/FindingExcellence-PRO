@@ -5,9 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 FindingExcellence PRO is a desktop application for intelligent file and content search with AI-powered analytics. It combines:
-- **Backend**: FastAPI Python server with OpenRouter AI integration
+- **Backend**: FastAPI Python server with local Ollama AI (100% privacy)
 - **Frontend**: React + Electron desktop application
-- **Core Features**: Excel/PDF search, natural language queries, document analysis
+- **Core Features**: Excel/PDF search, natural language queries, document analysis, OCR with Qwen2.5-VL
+- **Privacy**: All AI inference runs locally - zero external API calls
 
 ## Development Commands
 
@@ -61,6 +62,34 @@ pnpm run build-electron          # Build Electron app
 - Pytest markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
 - See `backend/tests/README.md` for detailed testing guide
 
+### Ollama Setup (Local AI - 100% Privacy)
+
+**One-time Installation:**
+1. Download Ollama from https://ollama.com
+2. Run the installer and follow prompts
+3. Pull required models (run in Command Prompt):
+   ```cmd
+   ollama pull llama3.1:8b         # Primary text model (~4.7GB)
+   ollama pull qwen2.5-vl:7b       # Vision/OCR model (~4.4GB)
+   ollama pull deepseek-r1:1.5b    # Fast fallback model (~1GB)
+   ```
+4. Verify installation: `ollama list`
+
+**Daily Usage:**
+- Ollama runs as a background service after installation
+- Accessible at `http://localhost:11434`
+- No API keys needed - completely local and private
+
+**Performance:**
+- CPU-only: 10-20 tokens/sec (varies by hardware)
+- GPU-enabled: 40-100 tokens/sec (requires NVIDIA/AMD GPU)
+- OCR: 15-30 sec per image (CPU), 5-10 sec (GPU)
+
+**Troubleshooting:**
+- If Ollama not running: Start manually from Windows Start Menu
+- If models not found: Check `C:\Users\[USERNAME]\.ollama\models\`
+- Backend will gracefully fall back to traditional search if Ollama unavailable
+
 ## Architecture
 
 ### Backend Structure
@@ -68,8 +97,8 @@ pnpm run build-electron          # Build Electron app
 backend/
 ├── main.py              # FastAPI app entry point, all API endpoints defined here
 ├── ai/
-│   ├── openrouter_client.py    # OpenRouter API client with fallback chains
-│   └── ai_services.py          # High-level AI features (NL search, analysis)
+│   ├── ollama_client.py        # Local Ollama client (llama3.1:8b, qwen2.5-vl:7b)
+│   └── ai_services.py          # High-level AI features (NL search, analysis, OCR)
 ├── core/
 │   ├── file_search.py          # Filename-based search with threading support
 │   ├── content_search.py       # Multi-threaded content search in files
@@ -100,11 +129,14 @@ frontend/
 
 ### Key Architectural Patterns
 
-1. **AI Integration via OpenRouter**
-   - Client in `backend/ai/openrouter_client.py` with model fallback chains
-   - Free models preferred: `deepseek/deepseek-r1:free`, `google/gemini-2.0-flash-exp:free`
-   - Cost tracking built-in: `total_cost`, `total_requests`, `total_tokens`
-   - Usage stats endpoint: `GET /api/usage/stats`
+1. **AI Integration via Local Ollama (100% Privacy)**
+   - Client in `backend/ai/ollama_client.py` with model fallback chains
+   - Primary model: `llama3.1:8b` (best reasoning, 105M downloads)
+   - Vision model: `qwen2.5-vl:7b` (state-of-the-art OCR, 75% accuracy vs GPT-4o)
+   - Fallback models: `deepseek-r1:1.5b` (ultra-fast), `llava:7b` (alternative vision)
+   - Latency tracking built-in: `latency_ms`, `total_requests`, `total_tokens`
+   - Usage stats endpoint: `GET /api/usage/stats` (shows latency instead of cost)
+   - Zero external API calls - all processing on local machine
 
 2. **Search Pipeline**
    - Filename search (`file_search.py`) → Content search (`content_search.py`)
@@ -113,10 +145,11 @@ frontend/
 
 3. **FastAPI Endpoints** (all in `main.py`)
    - `POST /api/search/filename` - Filename-based search
-   - `POST /api/search/natural-language` - AI-powered natural language search
+   - `POST /api/search/natural-language` - AI-powered natural language search (NL → structured params)
    - `POST /api/search/content` - Content search in Excel/PDF files
-   - `POST /api/analyze` - AI document analysis
-   - `GET /api/usage/stats` - AI usage statistics
+   - `POST /api/analyze` - AI document analysis (summary, trends, anomalies, insights)
+   - `POST /api/ocr` - OCR text extraction from images (Qwen2.5-VL 7B)
+   - `GET /api/usage/stats` - AI usage statistics (latency metrics)
    - `GET /health` - Health check
 
 4. **Threading & Concurrency**
@@ -134,12 +167,14 @@ frontend/
 
 Required in `.env` (never commit):
 ```env
-# OpenRouter AI
-OPENROUTER_API_KEY=sk-or-v1-your-key-here
-
-# Cost Management
-MAX_MONTHLY_COST_USD=10.00
-ALERT_THRESHOLD_USD=5.00
+# Ollama Local AI Configuration (100% privacy - no external API calls)
+# Install Ollama from https://ollama.com
+# Download models: ollama pull llama3.1:8b && ollama pull qwen2.5-vl:7b
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
+OLLAMA_VISION_MODEL=qwen2.5-vl:7b
+OLLAMA_TEMPERATURE=0.3
+OLLAMA_MAX_TOKENS=2000
 
 # App Configuration
 APP_NAME=FindingExcellence_PRO
@@ -175,10 +210,11 @@ LOG_LEVEL=INFO
    - Regular security audits with `pip-audit` via `venv-manage.bat audit`
    - Never commit `.env` files or `venv/` directory
 
-2. **API Key Protection**
-   - OpenRouter key in environment variable only
-   - Cost tracking prevents runaway AI expenses
-   - Thresholds configurable in `.env`
+2. **Complete Data Privacy (Local AI)**
+   - No external API calls - all AI processing on local machine
+   - File paths and content never leave the device
+   - Ollama host configured via `OLLAMA_HOST` environment variable
+   - Models downloaded locally (~10GB total for text + vision)
 
 3. **Input Validation**
    - Pydantic models for all API requests

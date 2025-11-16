@@ -1,14 +1,17 @@
-﻿import pytest
+﻿import json
 import os
-import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 
 class TestAPIIntegration:
     @pytest.fixture
     def client(self):
         try:
-            from backend.main import app
             from fastapi.testclient import TestClient
+
+            from backend.main import app
             return TestClient(app)
         except ImportError:
             pytest.skip('FastAPI not available')
@@ -46,6 +49,26 @@ class TestAPIIntegration:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, dict)
+
+    def test_ocr_endpoint_not_available(self, client):
+        """Test /api/ocr endpoint when Ollama is not available"""
+        payload = {
+            'image_url': 'https://example.com/image.png',
+            'extract_tables': False
+        }
+        response = client.post('/api/ocr', json=payload)
+        # Should return 503 if AI service not available, or process if available
+        assert response.status_code in [200, 503, 500]
+
+    def test_analyze_endpoint_exists(self, client):
+        """Test /api/analyze endpoint"""
+        payload = {
+            'content': 'Sample document content',
+            'analysis_type': 'summary'
+        }
+        response = client.post('/api/analyze', json=payload)
+        # Should return 503 if AI service not available, or process if available
+        assert response.status_code in [200, 503, 500]
 
 class TestSearchFunctionality:
     def test_file_search_with_keywords(self):

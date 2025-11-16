@@ -1,9 +1,11 @@
-﻿import pytest
+﻿import json
 import os
-import json
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture
 def temp_dir():
@@ -88,33 +90,54 @@ class TestConfigManager:
         except ImportError:
             pytest.skip('ConfigManager not available')
 
-class TestOpenRouterClient:
+class TestOllamaClient:
     def test_import(self):
         try:
-            from backend.ai.openrouter_client import OpenRouterClient
-            assert OpenRouterClient is not None
+            from backend.ai.ollama_client import OllamaClient
+            assert OllamaClient is not None
         except ImportError as e:
-            pytest.skip(f'OpenRouterClient import failed: {e}')
-
-    def test_client_initialization(self):
-        try:
-            from backend.ai.openrouter_client import OpenRouterClient
-            client = OpenRouterClient(api_key='test-key')
-            assert client is not None
-            assert client.MODELS is not None
-            assert len(client.MODELS) > 0
-        except ImportError:
-            pytest.skip('OpenRouterClient not available')
+            pytest.skip(f'OllamaClient import failed: {e}')
 
     def test_model_configuration(self):
         try:
-            from backend.ai.openrouter_client import OpenRouterClient
-            client = OpenRouterClient(api_key='test-key')
-            required_models = ['general_free', 'vision_free', 'general', 'vision']
+            from backend.ai.ollama_client import OllamaClient
+            # Models should be accessible as class attributes
+            assert hasattr(OllamaClient, 'MODELS')
+            required_models = ['general', 'general_fast', 'vision', 'fallback_general']
             for model_key in required_models:
-                assert model_key in client.MODELS, f'Missing model: {model_key}'
+                assert model_key in OllamaClient.MODELS, f'Missing model: {model_key}'
         except ImportError:
-            pytest.skip('OpenRouterClient not available')
+            pytest.skip('OllamaClient not available')
+
+    def test_fallback_chains(self):
+        try:
+            from backend.ai.ollama_client import OllamaClient
+            # Fallback chains should be configured
+            assert hasattr(OllamaClient, 'FALLBACK_CHAINS')
+            assert 'general' in OllamaClient.FALLBACK_CHAINS
+            assert 'vision' in OllamaClient.FALLBACK_CHAINS
+            assert len(OllamaClient.FALLBACK_CHAINS['general']) > 0
+        except ImportError:
+            pytest.skip('OllamaClient not available')
+
+    def test_usage_stats_structure(self):
+        try:
+            from backend.ai.ollama_client import UsageStats
+            # Test UsageStats dataclass
+            stats = UsageStats(
+                prompt_tokens=10,
+                completion_tokens=20,
+                total_tokens=30,
+                latency_ms=100.5,
+                model='test-model'
+            )
+            assert stats.prompt_tokens == 10
+            assert stats.completion_tokens == 20
+            assert stats.total_tokens == 30
+            assert stats.latency_ms == 100.5
+            assert stats.model == 'test-model'
+        except ImportError:
+            pytest.skip('OllamaClient not available')
 
 class TestExport:
     def test_import(self):
@@ -148,8 +171,9 @@ class TestFastAPIEndpoints:
 
     def test_health_endpoint(self):
         try:
-            from backend.main import app
             from fastapi.testclient import TestClient
+
+            from backend.main import app
             client = TestClient(app)
             response = client.get('/health')
             assert response.status_code == 200
