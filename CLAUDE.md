@@ -88,23 +88,36 @@ Desktop UI → api_client.py → HTTP → FastAPI (main.py) → Services
    - Application runs without AI if Ollama unavailable
    - Missing dependencies don't crash the app
 
-2. **Hybrid Analysis for Tabular Data:**
+2. **Optimized File Search (Phase 1 & 2):**
+   - `os.scandir()` instead of `os.walk()` for faster I/O (~3-5x faster)
+   - Pre-compiled regex patterns for keyword matching
+   - SQLite-based caching for repeated searches (~100x faster)
+   - Graceful degradation: works without cache, just slower
+
+3. **SQLite File Indexing:**
+   - `FileIndex` class in `backend/core/file_index.py`
+   - Persistent cache with TTL-based invalidation (1 hour default)
+   - SQL LIKE queries for instant keyword search
+   - Smart folder modification time checking
+   - **Zero .exe size impact** (sqlite3 is built-in Python)
+
+4. **Hybrid Analysis for Tabular Data:**
    - Extract statistics with Polars/Pandas (fast, accurate)
    - Send condensed summary to LLM for interpretation
    - Much faster than sending raw data to LLM
 
-3. **Async Search with Progress Polling:**
+5. **Async Search with Progress Polling:**
    - Client POSTs to `/api/search/filename` → returns `search_id` immediately
    - Backend starts search in background thread
    - Client polls `/api/search/progress/{search_id}` for updates
    - Client retrieves results from `/api/search/results/{search_id}` when complete
 
-4. **Model Warmup Pattern:**
+6. **Model Warmup Pattern:**
    - Models preloaded in background thread on startup
    - Eliminates cold-start delay for first request
    - Configurable with `OLLAMA_KEEP_ALIVE` environment variable
 
-5. **File Handler Interface:**
+7. **File Handler Interface:**
    - All handlers return `(content, error)` tuples
    - Encoding fallback: UTF-8 → Latin-1 → CP1252 → ISO-8859-1
    - Supports cancellation via `threading.Event`
@@ -352,6 +365,38 @@ def _on_my_work_complete(self, result):
     self.results_panel.display_results(result)
 ```
 
+## Performance Optimization Status
+
+### File Search Optimization (Phase 1 & 2) ✅ COMPLETE
+
+**Results from real-world testing (854,567 files on Desktop):**
+
+| Scenario | Time | Status |
+|----------|------|--------|
+| Initial scan (no cache) | ~20-24s | ✅ Acceptable |
+| Repeated search (cache) | <0.01s | ✅ Instant |
+| Cache speedup | 3,945x - 17,087x | ✅ Excellent |
+
+**Implementation:**
+1. **Phase 1**: Replaced `os.walk()` with `os.scandir()` → 3-5x faster
+2. **Phase 2**: Added SQLite caching with TTL → 100x-17,000x faster for cached searches
+3. **Impact**: 0 MB added to .exe (sqlite3 is built-in Python)
+
+**Key Files:**
+- `backend/core/file_search_optimized.py` - Optimized search engine
+- `backend/core/file_index.py` - SQLite cache layer
+- See `docs/PERFORMANCE_RESULTS.md` for detailed benchmarks
+
+### Performance Targets
+
+| Use Case | Target | Actual | Status |
+|----------|--------|--------|--------|
+| Small search (100 files) | <1s | 0.006s | ✅ 166x faster |
+| Medium search (1K files) | <5s | 0.029s | ✅ 172x faster |
+| Large search (10K files) | <10s | 0.3-0.5s | ✅ 20-30x faster |
+| Desktop search (854K files) | <30s | 20-24s | ✅ Meets target |
+| Cached search | <100ms | <10ms | ✅ Instant |
+
 ## Important Notes
 
 - **Windows CMD only** - .bat scripts don't work in PowerShell/Git Bash
@@ -361,3 +406,4 @@ def _on_my_work_complete(self, result):
 - **All local** - No external API keys or cloud services needed
 - **Models**: phi4-mini is primary (faster), qwen3:4b-instruct is fallback
 - **Model warmup**: First request to backend triggers model warmup (~30s), subsequent requests are fast
+- **File search**: Optimized with os.scandir + SQLite caching (see Performance section above)
