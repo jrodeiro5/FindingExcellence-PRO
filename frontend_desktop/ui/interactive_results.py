@@ -65,46 +65,46 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         filename_header = ctk.CTkLabel(
             header_row,
             text="Filename ▼",
-            font=("Arial", 9, "bold"),
-            text_color="#CCCCCC",
+            font=("Arial", 10, "bold"),
+            text_color="#FFFFFF",
             cursor="hand2"
         )
-        filename_header.pack(side="left", padx=5, fill="x", expand=True)
+        filename_header.pack(side="left", padx=8, fill="x", expand=True)
         filename_header.bind("<Button-1>", lambda e: self._sort_results("filename"))
 
         # Path header
         path_header = ctk.CTkLabel(
             header_row,
             text="Path",
-            font=("Arial", 9, "bold"),
-            text_color="#999999",
+            font=("Arial", 10, "bold"),
+            text_color="#CCCCCC",
             cursor="hand2"
         )
-        path_header.pack(side="left", padx=5, fill="x", expand=True)
+        path_header.pack(side="left", padx=8, fill="x", expand=True)
         path_header.bind("<Button-1>", lambda e: self._sort_results("path"))
 
         # Modified header
         modified_header = ctk.CTkLabel(
             header_row,
             text="Modified",
-            font=("Arial", 9, "bold"),
-            text_color="#999999",
+            font=("Arial", 10, "bold"),
+            text_color="#CCCCCC",
             cursor="hand2",
-            width=120
+            width=130
         )
-        modified_header.pack(side="left", padx=5)
+        modified_header.pack(side="left", padx=8)
         modified_header.bind("<Button-1>", lambda e: self._sort_results("modified"))
 
         # Type header
         type_header = ctk.CTkLabel(
             header_row,
             text="Type",
-            font=("Arial", 9, "bold"),
-            text_color="#999999",
+            font=("Arial", 10, "bold"),
+            text_color="#CCCCCC",
             cursor="hand2",
-            width=50
+            width=60
         )
-        type_header.pack(side="left", padx=5)
+        type_header.pack(side="left", padx=8)
         type_header.bind("<Button-1>", lambda e: self._sort_results("type"))
 
         # Store header references for updating sort indicators
@@ -229,7 +229,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
 
     def _create_result_row(self, index: int, file_info: Dict[str, Any]):
         """Create an interactive result row."""
-        row_frame = ctk.CTkFrame(self.inner_frame, fg_color="#1a1a1a", height=40)
+        row_frame = ctk.CTkFrame(self.inner_frame, fg_color="#1a1a1a", height=48)
         row_frame.pack(fill="x", padx=2, pady=2)
         row_frame.pack_propagate(False)
 
@@ -246,42 +246,42 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         filename_label = ctk.CTkLabel(
             row_frame,
             text=filename,
-            font=("Courier", 9),
+            font=("Courier", 10),
             text_color="#FFFFFF",
             anchor="w"
         )
-        filename_label.pack(side="left", padx=5, fill="x", expand=True)
+        filename_label.pack(side="left", padx=8, fill="x", expand=True)
 
         # Path (truncated)
         truncated_path = path if len(path) < 40 else "..." + path[-37:]
         path_label = ctk.CTkLabel(
             row_frame,
             text=truncated_path,
-            font=("Courier", 8),
-            text_color="#AAAAAA",
+            font=("Courier", 9),
+            text_color="#BBBBBB",
             anchor="w"
         )
-        path_label.pack(side="left", padx=5, fill="x", expand=True)
+        path_label.pack(side="left", padx=8, fill="x", expand=True)
 
         # Modified date
         modified_label = ctk.CTkLabel(
             row_frame,
             text=modified[:10] if modified else "",
-            font=("Courier", 8),
-            text_color="#888888",
-            width=120
+            font=("Courier", 9),
+            text_color="#999999",
+            width=130
         )
-        modified_label.pack(side="left", padx=5)
+        modified_label.pack(side="left", padx=8)
 
         # File type
         type_label = ctk.CTkLabel(
             row_frame,
             text=file_type[:6],
-            font=("Courier", 8),
-            text_color="#666666",
-            width=50
+            font=("Courier", 9),
+            text_color="#777777",
+            width=60
         )
-        type_label.pack(side="left", padx=5)
+        type_label.pack(side="left", padx=8)
 
         # Bind events
         for label in [filename_label, path_label, modified_label, type_label]:
