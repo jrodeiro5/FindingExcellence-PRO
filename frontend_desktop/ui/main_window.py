@@ -22,7 +22,16 @@ except ImportError:
     from api_client import BackendClient
     from core.file_search import FileSearch
 
-from ..branding import COLORS, FONTS, THEME
+# Handle branding imports with fallback
+try:
+    from ..branding import COLORS, FONTS, THEME
+except ImportError:
+    # Fallback: add parent directory to path
+    parent_dir = str(Path(__file__).parent.parent)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from branding import COLORS, FONTS, THEME
+
 from .analysis_panel import AnalysisPanel
 from .interactive_results import InteractiveResultsPanel
 from .results_panel import ResultsPanel

@@ -2,13 +2,22 @@
 
 import os
 import subprocess
+import sys
 import tkinter as tk
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import customtkinter as ctk
 
-from ..branding import COLORS
+# Handle branding imports with fallback
+try:
+    from ..branding import COLORS
+except ImportError:
+    # Fallback: add parent directory to path
+    parent_dir = str(Path(__file__).parent.parent)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from branding import COLORS
 
 
 class InteractiveResultsPanel(ctk.CTkFrame):
