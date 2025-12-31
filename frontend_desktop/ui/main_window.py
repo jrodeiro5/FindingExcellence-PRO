@@ -90,35 +90,55 @@ class ExcelFinderApp(ctk.CTk):
         content_frame = ctk.CTkFrame(self)
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+        # Main container for tabs and results
+        tabs_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+        tabs_container.pack(fill="both", expand=True)
+
         # Tabview
-        self.tabview = ctk.CTkTabview(content_frame)
+        self.tabview = ctk.CTkTabview(tabs_container)
         self.tabview.pack(fill="both", expand=True)
 
-        # Tab 1: File Search
+        # Tab 1: File Search (with independent results panel)
         search_tab = self.tabview.add("File Search")
+        search_container = ctk.CTkFrame(search_tab, fg_color="transparent")
+        search_container.pack(fill="both", expand=True)
+
         self.search_panel = SearchPanel(
-            search_tab,
+            search_container,
             on_search_callback=self._on_search_start,
             on_cancel_callback=self._on_cancel_search,
             on_status_callback=self._update_status
         )
-        self.search_panel.pack(fill="both", expand=True)
+        self.search_panel.pack(fill="x", padx=0, pady=0)
 
-        # Tab 2: AI Analysis
+        # Independent results panel for File Search tab
+        self.search_results_panel = InteractiveResultsPanel(
+            search_container,
+            on_status_callback=self._update_status
+        )
+        self.search_results_panel.pack(fill="both", expand=True, pady=(10, 0))
+
+        # Tab 2: AI Analysis (with independent results panel)
         analysis_tab = self.tabview.add("AI Analysis")
+        analysis_container = ctk.CTkFrame(analysis_tab, fg_color="transparent")
+        analysis_container.pack(fill="both", expand=True)
+
         self.analysis_panel = AnalysisPanel(
-            analysis_tab,
+            analysis_container,
             on_analysis_callback=self._on_analysis_start,
             on_status_callback=self._update_status
         )
-        self.analysis_panel.pack(fill="both", expand=True)
+        self.analysis_panel.pack(fill="x", padx=0, pady=0)
 
-        # Results panel (shared between tabs) - now interactive with context menu
-        self.results_panel = InteractiveResultsPanel(
-            content_frame,
+        # Independent results panel for AI Analysis tab
+        self.analysis_results_panel = InteractiveResultsPanel(
+            analysis_container,
             on_status_callback=self._update_status
         )
-        self.results_panel.pack(fill="both", expand=True, pady=(10, 0))
+        self.analysis_results_panel.pack(fill="both", expand=True, pady=(10, 0))
+
+        # Reference for backward compatibility
+        self.results_panel = self.search_results_panel
 
         # Progress bar (hidden initially)
         self.progress_bar = ctk.CTkProgressBar(content_frame, height=8)
@@ -157,7 +177,7 @@ class ExcelFinderApp(ctk.CTk):
 
         # Reset cancel event and clear previous results
         self.cancel_event.clear()
-        self.results_panel.clear_results()
+        self.search_results_panel.clear_results()
 
         # Update UI state
         self.search_panel.set_searching_state(True)
@@ -237,8 +257,8 @@ class ExcelFinderApp(ctk.CTk):
             cache_indicator = "📦 (cached)" if is_cached else "🔍 (live)"
             self._update_status(f"Found {len(results)} files {cache_indicator}", color="#52CC52")
 
-        # Display results with cache status
-        self.results_panel.display_results(results, is_cached=is_cached)
+        # Display results in search tab (independent results panel)
+        self.search_results_panel.display_results(results, is_cached=is_cached)
 
     def _on_search_error(self, error: str):
         """Called when search encounters an error."""
@@ -265,7 +285,7 @@ class ExcelFinderApp(ctk.CTk):
 
         # Disable UI and show progress
         self.analysis_panel.disable_upload_button()
-        self.results_panel.clear_results()
+        self.analysis_results_panel.clear_results()
         self._update_status("Analyzing file...", color="#FFB347")
 
         # Show enhanced progress indicator with elapsed time
@@ -375,14 +395,8 @@ class ExcelFinderApp(ctk.CTk):
 
         self._update_status(f"Analysis complete ({elapsed:.1f}s)", color="#52CC52")
 
-        # Display results in the analysis panel's own results area
-        self.analysis_panel.display_results(result)
-
-        # Also update the shared results panel
-        self.results_panel.display_analysis_result(result)
-
-        # Ensure results panel is visible
-        self.tabview.set("Analysis Tab" if hasattr(self, '_analysis_tab_name') else "File Search")
+        # Display results in analysis tab's independent results panel
+        self.analysis_results_panel.display_analysis_result(result)
 
     def _on_analysis_error(self, error: str):
         """Called when analysis encounters an error."""

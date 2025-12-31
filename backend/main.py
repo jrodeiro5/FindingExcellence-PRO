@@ -161,7 +161,10 @@ async def analyze_file(file: UploadFile = File(...), analysis_type: str = "summa
         try:
             if file_ext == '.pdf':
                 logger.debug(f"Extracting text from PDF: {file.filename}")
-                extracted_text = PDFProcessor.extract_text(str(temp_path))
+                extracted_text, error = PDFProcessor.extract_text(str(temp_path))
+                if error:
+                    logger.error(f"PDF extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"PDF error: {error}")
             elif file_ext in ['.xlsx', '.xls', '.xlsm']:
                 logger.debug(f"Extracting text from Excel: {file.filename}")
                 extracted_text, error = ExcelHandler.read_excel(str(temp_path))

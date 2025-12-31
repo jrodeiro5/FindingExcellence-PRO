@@ -59,9 +59,9 @@ class OllamaClient:
 
     # Default configuration (can be overridden via environment variables)
     # CPU optimization: smaller context and fewer tokens = faster inference
-    DEFAULT_CONTEXT_SIZE = int(os.getenv("OLLAMA_CONTEXT_SIZE", "1024"))  # Smaller = faster
-    DEFAULT_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.3"))
-    DEFAULT_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "500"))  # Reduced for CPU speed
+    DEFAULT_CONTEXT_SIZE = int(os.getenv("OLLAMA_CONTEXT_SIZE", "512"))  # Smaller = faster (1024 → 512)
+    DEFAULT_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.2"))  # Lower = faster/more deterministic (0.3 → 0.2)
+    DEFAULT_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "256"))  # Reduced for CPU speed (500 → 256)
 
     # Keep models loaded in memory (December 2025 optimization)
     # Values: -1 (forever), 0 (unload immediately), "5m" (5 minutes), "1h" (1 hour)

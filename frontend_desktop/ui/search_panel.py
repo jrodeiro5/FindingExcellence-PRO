@@ -51,13 +51,13 @@ class SearchPanel(ctk.CTkFrame):
         title = ctk.CTkLabel(
             self,
             text="File Search",
-            font=("Arial", 14, "bold")
+            font=("Arial", 12, "bold")
         )
-        title.pack(padx=20, pady=(20, 10), anchor="w")
+        title.pack(padx=15, pady=(10, 5), anchor="w")
 
         # Keyword frame
         keyword_frame = ctk.CTkFrame(self, fg_color="transparent")
-        keyword_frame.pack(fill="x", padx=20, pady=10)
+        keyword_frame.pack(fill="x", padx=15, pady=5)
 
         ctk.CTkLabel(keyword_frame, text="Keywords:", font=("Arial", 11)).pack(side="left", padx=(0, 10))
         self.keyword_entry = ctk.CTkEntry(
@@ -81,54 +81,54 @@ class SearchPanel(ctk.CTkFrame):
 
         # Date range frame
         date_frame = ctk.CTkFrame(self, fg_color="transparent")
-        date_frame.pack(fill="x", padx=20, pady=10)
+        date_frame.pack(fill="x", padx=15, pady=4)
 
-        ctk.CTkLabel(date_frame, text="Date Range:", font=("Arial", 11)).pack(side="left", padx=(0, 10))
+        ctk.CTkLabel(date_frame, text="Date:", font=("Arial", 9)).pack(side="left", padx=(0, 5))
 
         # Start date
-        ctk.CTkLabel(date_frame, text="From:", font=("Arial", 10)).pack(side="left", padx=(10, 5))
+        ctk.CTkLabel(date_frame, text="From:", font=("Arial", 9)).pack(side="left", padx=(5, 2))
         self.start_date_entry = ctk.CTkEntry(
             date_frame,
             placeholder_text="YYYY-MM-DD",
-            width=110,
-            height=30,
-            font=("Arial", 10)
+            width=95,
+            height=25,
+            font=("Arial", 9)
         )
-        self.start_date_entry.pack(side="left", padx=(0, 10))
+        self.start_date_entry.pack(side="left", padx=(0, 5))
 
         # End date
-        ctk.CTkLabel(date_frame, text="To:", font=("Arial", 10)).pack(side="left", padx=(10, 5))
+        ctk.CTkLabel(date_frame, text="To:", font=("Arial", 9)).pack(side="left", padx=(5, 2))
         self.end_date_entry = ctk.CTkEntry(
             date_frame,
             placeholder_text="YYYY-MM-DD",
-            width=110,
-            height=30,
-            font=("Arial", 10)
+            width=95,
+            height=25,
+            font=("Arial", 9)
         )
-        self.end_date_entry.pack(side="left", padx=(0, 10))
+        self.end_date_entry.pack(side="left", padx=(0, 5))
 
         # Clear dates button
         self.clear_dates_button = ctk.CTkButton(
             date_frame,
             text="Clear",
-            width=60,
-            height=28,
-            font=("Arial", 9),
+            width=50,
+            height=25,
+            font=("Arial", 8),
             command=self._clear_dates
         )
-        self.clear_dates_button.pack(side="left", padx=(5, 0))
+        self.clear_dates_button.pack(side="left", padx=(2, 0))
 
         # Folder selection
         folder_label = ctk.CTkLabel(
             self,
-            text="Search Folders:",
-            font=("Arial", 11)
+            text="Folders:",
+            font=("Arial", 9)
         )
-        folder_label.pack(padx=20, pady=(15, 5), anchor="w")
+        folder_label.pack(padx=15, pady=(5, 2), anchor="w")
 
         # Folder display (scrollable)
         folder_frame = ctk.CTkFrame(self, fg_color="#2a2a2a")
-        folder_frame.pack(fill="x", padx=20, pady=5)
+        folder_frame.pack(fill="x", padx=15, pady=2)
 
         self.folder_text = ctk.CTkTextbox(
             folder_frame,
@@ -144,25 +144,29 @@ class SearchPanel(ctk.CTkFrame):
 
         # Folder buttons frame
         button_frame = ctk.CTkFrame(self, fg_color="transparent")
-        button_frame.pack(fill="x", padx=20, pady=10)
+        button_frame.pack(fill="x", padx=15, pady=3)
 
         ctk.CTkButton(
             button_frame,
             text="Browse",
-            width=100,
+            width=70,
+            height=24,
+            font=("Arial", 9),
             command=self._browse_folder
-        ).pack(side="left", padx=(0, 10))
+        ).pack(side="left", padx=(0, 5))
 
         ctk.CTkButton(
             button_frame,
             text="Clear All",
-            width=100,
+            width=70,
+            height=24,
+            font=("Arial", 9),
             command=self._clear_folders
-        ).pack(side="left", padx=(0, 10))
+        ).pack(side="left", padx=(0, 5))
 
         # Button container for search/cancel toggle
         self.button_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.button_container.pack(fill="x", padx=20, pady=15)
+        self.button_container.pack(fill="x", padx=15, pady=5)
 
         # Search button
         self.search_button = ctk.CTkButton(

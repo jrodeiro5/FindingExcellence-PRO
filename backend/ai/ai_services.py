@@ -164,11 +164,11 @@ Examples:
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an expert document analyst. Provide clear, structured analysis."
+                    "content": "You are an expert document analyst. Provide clear, concise analysis."
                 },
                 {
                     "role": "user",
-                    "content": f"{prompt}\n\nDocument:\n{content[:3000]}"
+                    "content": f"{prompt}\n\nDocument:\n{content[:1500]}"
                 }
             ]
 
