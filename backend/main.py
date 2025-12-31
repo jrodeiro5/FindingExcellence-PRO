@@ -1,14 +1,19 @@
 """FastAPI backend for FindingExcellence_PRO"""
 import logging
 import os
+from pathlib import Path
 from typing import List, Optional
 
 from ai.ai_services import AISearchService
+from ai.data_analyzer import get_data_summary
 from core.content_search import ContentSearch
+from core.csv_handler import CSVHandler
+from core.excel_handler import ExcelHandler
 from core.file_search import FileSearch
 from core.pdf_processor import PDFProcessor
+from core.text_handler import TextHandler
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from utils.logging_setup import setup_logging
@@ -130,14 +135,115 @@ async def search_content(request: ContentSearchRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze")
-async def analyze_file(request: AIAnalysisRequest):
+async def analyze_file(file: UploadFile = File(...), analysis_type: str = "summary"):
+    """
+    Upload and analyze a document file (PDF, CSV, XLSX, TXT).
+    Extracts text and returns AI analysis.
+    """
     if not ai_service:
-        raise HTTPException(status_code=503, detail="AI not available")
+        raise HTTPException(status_code=503, detail="AI service not available")
+
     try:
-        result = ai_service.analyze_document(request.content, request.analysis_type)
-        return result
+        # Save uploaded file temporarily
+        temp_path = Path(f"temp_uploads/{file.filename}")
+        temp_path.parent.mkdir(parents=True, exist_ok=True)
+
+        contents = await file.read()
+        with open(temp_path, 'wb') as f:
+            f.write(contents)
+
+        logger.info(f"Processing file: {file.filename} ({file.content_type})")
+
+        # Extract text based on file type
+        extracted_text = ""
+        file_ext = Path(file.filename).suffix.lower()
+
+        try:
+            if file_ext == '.pdf':
+                logger.debug(f"Extracting text from PDF: {file.filename}")
+                extracted_text = PDFProcessor.extract_text(str(temp_path))
+            elif file_ext in ['.xlsx', '.xls', '.xlsm']:
+                logger.debug(f"Extracting text from Excel: {file.filename}")
+                extracted_text, error = ExcelHandler.read_excel(str(temp_path))
+                if error:
+                    logger.error(f"Excel extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"Excel error: {error}")
+            elif file_ext == '.csv':
+                logger.debug(f"Extracting text from CSV: {file.filename}")
+                extracted_text, error = CSVHandler.read_csv(str(temp_path))
+                if error:
+                    logger.error(f"CSV extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"CSV error: {error}")
+            elif file_ext in ['.txt']:
+                logger.debug(f"Extracting text from TXT: {file.filename}")
+                extracted_text, error = TextHandler.read_text(str(temp_path))
+                if error:
+                    logger.error(f"Text extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"Text error: {error}")
+            else:
+                logger.warning(f"Unsupported file type: {file_ext}")
+                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_ext}")
+
+            if not extracted_text:
+                logger.warning(f"No text extracted from: {file.filename}")
+                raise HTTPException(status_code=400, detail=f"Could not extract text from {file.filename}")
+
+            logger.info(f"Extracted {len(extracted_text)} characters from {file.filename}")
+
+            # For tabular data (CSV/Excel), use hybrid approach:
+            # 1. Extract statistics with polars/pandas (fast, accurate)
+            # 2. Send condensed summary to LLM for interpretation
+            if file_ext in ['.csv', '.xlsx', '.xls', '.xlsm']:
+                logger.info(f"Using hybrid analysis for tabular data: {file.filename}")
+                data_summary, data_metadata = get_data_summary(str(temp_path), file_ext)
+
+                # Create prompt with structured data summary
+                analysis_prompt = f"""Analyze this dataset and provide insights:
+
+{data_summary}
+
+Provide:
+1. Key findings and patterns
+2. Data quality observations
+3. Actionable recommendations"""
+
+                logger.debug(f"Sending {len(data_summary)} char data summary to LLM")
+                result = ai_service.analyze_document(analysis_prompt, analysis_type)
+
+                logger.info(f"Hybrid analysis complete for {file.filename}")
+                return {
+                    "success": True,
+                    "filename": file.filename,
+                    "file_type": file_ext,
+                    "extracted_chars": len(extracted_text),
+                    "data_stats": data_metadata,
+                    "analysis": result
+                }
+
+            # For text-based files (PDF, TXT), send directly to LLM
+            logger.debug(f"Analyzing text with AI (type: {analysis_type})")
+            result = ai_service.analyze_document(extracted_text, analysis_type)
+
+            logger.info(f"Analysis complete for {file.filename}")
+            return {
+                "success": True,
+                "filename": file.filename,
+                "file_type": file_ext,
+                "extracted_chars": len(extracted_text),
+                "analysis": result
+            }
+
+        finally:
+            # Clean up temp file
+            if temp_path.exists():
+                temp_path.unlink()
+                logger.debug(f"Cleaned up temp file: {temp_path}")
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"File analysis failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.post("/api/ocr")
 async def ocr_image(request: OCRRequest):

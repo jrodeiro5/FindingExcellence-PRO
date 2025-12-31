@@ -29,24 +29,48 @@ class AISearchService:
 
         Example: "Find budget files from last month"
         → {"keywords": ["budget"], "start_date": "2025-10-01"}
+
+        Uses improved prompt engineering with examples and stricter requirements.
         """
         try:
             messages = [
                 {
                     "role": "system",
-                    "content": """You are a search query parser. Convert natural language search queries to JSON.
-You MUST respond with ONLY valid JSON, no other text.
-JSON schema: {
-  "keywords": ["list", "of", "search", "terms"],
-  "exclude_keywords": ["optional", "exclusions"],
+                    "content": """You are a search query parser that converts natural language to structured search parameters.
+You MUST respond with ONLY valid JSON, no other text. No explanations.
+
+IMPORTANT RULES:
+1. Extract SPECIFIC, CONCRETE keywords only - NO generic words like "file", "document", "data", "report"
+2. Keywords should be 1-4 words max, case-insensitive
+3. If user says "Q1", "Q2", "last month", "2025" - set date ranges, don't add to keywords
+4. If unsure about dates, leave as null
+5. Use exclude_keywords for items to exclude
+6. Return empty arrays [] if no keywords found, not null
+
+JSON schema (EXACTLY this format):
+{
+  "keywords": ["specific", "terms", "to", "find"],
+  "exclude_keywords": ["terms", "to", "exclude"],
   "start_date": "YYYY-MM-DD or null",
   "end_date": "YYYY-MM-DD or null"
-}"""
+}
+
+Examples:
+- "Find budget spreadsheets" → {"keywords": ["budget"], "exclude_keywords": [], "start_date": null, "end_date": null}
+- "Q3 financial reports excluding drafts" → {"keywords": ["financial"], "exclude_keywords": ["draft"], "start_date": "2025-07-01", "end_date": "2025-09-30"}
+- "Sales data from last 30 days" → {"keywords": ["sales"], "exclude_keywords": [], "start_date": "2025-10-17", "end_date": null}
+- "All PDF files" → {"keywords": [], "exclude_keywords": [], "start_date": null, "end_date": null}
+"""
                 },
                 {"role": "user", "content": f"Parse this search query: {query}"}
             ]
 
-            response, usage = self.ai.chat_completion(messages)
+            # Use faster model (DeepSeek R1 1.5B) for parsing - 3-5x faster than LLaMA 8B
+            # JSON parsing doesn't require heavy reasoning, so speed is prioritized
+            response, usage = self.ai.chat_completion(
+                messages,
+                model=self.ai.MODELS["general_fast"]  # deepseek-r1:1.5b
+            )
 
             # Parse JSON from response (may have extra whitespace)
             json_str = response.strip()
@@ -61,6 +85,10 @@ JSON schema: {
                     json_str = json_str[:end_idx+1]
 
             params = json.loads(json_str)
+
+            # Validate and clean keywords
+            params = self._validate_search_params(params)
+
             logger.info(f"NL search parsed: {params} | Latency: {usage.latency_ms:.0f}ms")
 
             return {
@@ -76,6 +104,36 @@ JSON schema: {
         except Exception as e:
             logger.error(f"Natural language search failed: {e}")
             return {"success": False, "error": str(e)}
+
+    def _validate_search_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate and clean search parameters to prevent overly generic searches
+        """
+        # Generic/useless keywords to filter out
+        generic_keywords = {
+            'file', 'files', 'document', 'documents', 'data', 'info', 'information',
+            'item', 'items', 'thing', 'things', 'all', 'any', 'find', 'search',
+            'get', 'show', 'list', 'report', 'spreadsheet', 'excel', 'pdf'
+        }
+
+        # Clean keywords - remove generic terms
+        keywords = params.get('keywords', [])
+        if isinstance(keywords, list):
+            keywords = [kw for kw in keywords if kw and kw.lower() not in generic_keywords]
+        else:
+            keywords = []
+
+        # Ensure arrays are lists, not null
+        exclude_keywords = params.get('exclude_keywords', [])
+        if not isinstance(exclude_keywords, list):
+            exclude_keywords = []
+
+        return {
+            "keywords": keywords,
+            "exclude_keywords": exclude_keywords,
+            "start_date": params.get('start_date'),
+            "end_date": params.get('end_date')
+        }
 
     def analyze_document(
         self,
@@ -95,9 +153,10 @@ JSON schema: {
         try:
             prompts = {
                 "summary": "Provide a concise summary of this document",
-                "trends": "Identify key trends and patterns",
+                "key_points": "Extract and list the key points from this document",
                 "anomalies": "Detect anomalies or unusual data points",
-                "insights": "Provide actionable business insights"
+                "insights": "Provide actionable business insights",
+                "trends": "Identify key trends and patterns"
             }
 
             prompt = prompts.get(analysis_type, analysis_type)

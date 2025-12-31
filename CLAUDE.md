@@ -4,288 +4,360 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FindingExcellence PRO is a desktop application for intelligent file and content search with AI-powered analytics. It combines:
-- **Backend**: FastAPI Python server with local Ollama AI (100% privacy)
-- **Frontend**: React + Electron desktop application
-- **Core Features**: Excel/PDF search, natural language queries, document analysis, OCR with Qwen2.5-VL
-- **Privacy**: All AI inference runs locally - zero external API calls
+FindingExcellence PRO v2.0 is a privacy-first desktop application for intelligent file search with local AI analytics. All AI runs locally via Ollama—zero external APIs or cloud services.
+
+- **Backend**: FastAPI (Python 3.12) on port 8000
+- **Frontend**: CustomTkinter desktop UI (dark theme)
+- **AI Models**: phi4-mini (general, primary), qwen3:4b-instruct (fallback), deepseek-ocr (vision) via Ollama
+
+## Quick Start
+
+```cmd
+# One-time setup
+uv-setup.bat
+
+# Daily development (two terminals)
+.venv\Scripts\activate.bat && python backend\main.py     # Terminal 1 - Backend
+.venv\Scripts\python.exe frontend_desktop\main.py        # Terminal 2 - Desktop
+
+# Or use convenience scripts
+start.bat      # Start both backend + desktop frontend
+stop.bat       # Stop all services
+```
+
+**Access Points:**
+- Desktop UI: CustomTkinter window (launches automatically)
+- API docs: http://localhost:8000/docs
+- Health: http://localhost:8000/health
 
 ## Development Commands
 
-### Environment Setup
 ```cmd
-# Initial setup (Windows CMD required, not PowerShell)
-setup-cmd.bat                    # Recommended: Direct CMD setup
-# OR
-venv-manage.bat install          # Alternative: Automated setup with Python launcher
-
-# Daily activation
-activate.bat                     # Activates venv and shows status
-```
-
-### Service Management
-```cmd
-start-all.bat                    # Start backend (port 8000) + frontend (port 5173)
-stop-all.bat                     # Stop all services cleanly
-start-simple.bat                 # Background startup (frontend in current window)
-```
-
-### Backend Development
-```cmd
-# Run backend server
-activate.bat
-python backend\main.py           # Runs on http://localhost:8000
+# Activate environment first
+.venv\Scripts\activate.bat
 
 # Run tests
-pytest                           # All tests
-pytest backend/tests/test_core.py -v              # Core unit tests
-pytest backend/tests/test_integration.py -v       # Integration tests
-pytest -m unit                   # Only unit tests
-pytest -m integration            # Only integration tests
-pytest --cov=backend --cov-report=html           # With coverage
+pytest                                    # All tests
+pytest backend/tests/test_core.py -v     # Single test file
+pytest -k "test_file_search"             # Single test by name
+pytest -m unit                           # Only unit tests
+pytest -m integration                    # Only integration tests
+pytest --cov=backend --cov-report=html   # With coverage report
 
-# Security audit
-venv-manage.bat audit            # Run pip-audit for vulnerabilities
+# Lint & format
+ruff check backend/                       # Check for issues
+ruff check backend/ --fix                # Auto-fix issues
+ruff format backend/                     # Format code
+
+# Type checking
+basedpyright backend/                    # Type check
+
+# View logs
+type finding_excellence.log              # Backend log
+type finding_excellence_desktop.log      # Desktop log
 ```
-
-### Frontend Development
-```cmd
-cd frontend
-pnpm install                     # Install dependencies
-pnpm run dev                     # Development server (port 5173)
-pnpm run build                   # Production build
-pnpm run build-electron          # Build Electron app
-```
-
-### Testing
-- Test files: `backend/tests/test_core.py`, `backend/tests/test_integration.py`
-- Pytest markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
-- See `backend/tests/README.md` for detailed testing guide
-
-### Ollama Setup (Local AI - 100% Privacy)
-
-**One-time Installation:**
-1. Download Ollama from https://ollama.com
-2. Run the installer and follow prompts
-3. Pull required models (run in Command Prompt):
-   ```cmd
-   ollama pull llama3.1:8b         # Primary text model (~4.7GB)
-   ollama pull qwen2.5-vl:7b       # Vision/OCR model (~4.4GB)
-   ollama pull deepseek-r1:1.5b    # Fast fallback model (~1GB)
-   ```
-4. Verify installation: `ollama list`
-
-**Daily Usage:**
-- Ollama runs as a background service after installation
-- Accessible at `http://localhost:11434`
-- No API keys needed - completely local and private
-
-**Performance:**
-- CPU-only: 10-20 tokens/sec (varies by hardware)
-- GPU-enabled: 40-100 tokens/sec (requires NVIDIA/AMD GPU)
-- OCR: 15-30 sec per image (CPU), 5-10 sec (GPU)
-
-**Troubleshooting:**
-- If Ollama not running: Start manually from Windows Start Menu
-- If models not found: Check `C:\Users\[USERNAME]\.ollama\models\`
-- Backend will gracefully fall back to traditional search if Ollama unavailable
 
 ## Architecture
 
 ### Backend Structure
+
+**Entry Point:** `backend/main.py` - FastAPI with all endpoints defined
+
+**Request Flow:**
 ```
-backend/
-├── main.py              # FastAPI app entry point, all API endpoints defined here
-├── ai/
-│   ├── ollama_client.py        # Local Ollama client (llama3.1:8b, qwen2.5-vl:7b)
-│   └── ai_services.py          # High-level AI features (NL search, analysis, OCR)
-├── core/
-│   ├── file_search.py          # Filename-based search with threading support
-│   ├── content_search.py       # Multi-threaded content search in files
-│   ├── excel_processor.py      # Excel file reading (pandas, openpyxl)
-│   ├── pdf_processor.py        # PDF text extraction (pdfplumber, PyMuPDF)
-│   └── config_manager.py       # Configuration persistence
-└── utils/
-    ├── logging_setup.py        # Centralized logging configuration
-    └── export.py               # Data export utilities
+Desktop UI → api_client.py → HTTP → FastAPI (main.py) → Services
 ```
 
-### Frontend Structure
+**AI Services** (`backend/ai/`):
+- `ollama_client.py` - Ollama integration (model management, warmup, fallback chains)
+- `ai_services.py` - High-level AI features (text analysis, OCR, search)
+- `data_analyzer.py` - Hybrid analysis (stats + LLM interpretation)
+- Optional: `pii_service.py` (PII detection), `ner_service.py` (entities), `chunking_service.py` (semantic chunks)
+
+**File Handlers** (`backend/core/`):
+- `file_search.py` - Multi-threaded filename search with cancellation support
+- `content_search.py` - Content search orchestrator
+- `csv_handler.py`, `excel_handler.py`, `pdf_processor.py`, `text_handler.py` - Format-specific handlers
+- `polars_handler.py` - Fast CSV processing for large files (>50MB)
+- `search_progress.py` - Async search progress tracking
+
+**Key Architectural Patterns:**
+
+1. **Graceful Degradation:**
+   - Every optional service has `is_available()` method
+   - Application runs without AI if Ollama unavailable
+   - Missing dependencies don't crash the app
+
+2. **Hybrid Analysis for Tabular Data:**
+   - Extract statistics with Polars/Pandas (fast, accurate)
+   - Send condensed summary to LLM for interpretation
+   - Much faster than sending raw data to LLM
+
+3. **Async Search with Progress Polling:**
+   - Client POSTs to `/api/search/filename` → returns `search_id` immediately
+   - Backend starts search in background thread
+   - Client polls `/api/search/progress/{search_id}` for updates
+   - Client retrieves results from `/api/search/results/{search_id}` when complete
+
+4. **Model Warmup Pattern:**
+   - Models preloaded in background thread on startup
+   - Eliminates cold-start delay for first request
+   - Configurable with `OLLAMA_KEEP_ALIVE` environment variable
+
+5. **File Handler Interface:**
+   - All handlers return `(content, error)` tuples
+   - Encoding fallback: UTF-8 → Latin-1 → CP1252 → ISO-8859-1
+   - Supports cancellation via `threading.Event`
+
+### Frontend Desktop Structure
+
+**Entry Point:** `frontend_desktop/main.py` → `ui/main_window.py` (ExcelFinderApp)
+
+**UI Components:**
 ```
-frontend/
-├── src/
-│   ├── App.jsx                 # Main app component with tab management
-│   ├── components/
-│   │   ├── SearchPanel.jsx     # File/content search UI
-│   │   ├── AISearchPanel.jsx   # Natural language search UI
-│   │   └── ResultsTable.jsx    # Search results display
-│   └── api/
-│       └── backendClient.js    # Backend API client
-├── electron/
-│   ├── main.js                 # Electron main process
-│   └── preload.js              # Preload scripts for security
-└── vite.config.js              # Vite bundler configuration
+ExcelFinderApp (main window)
+├── SearchPanel (File Search tab)
+│   ├── Keyword entry
+│   ├── Date range filters
+│   ├── Folder selection
+│   └── Search/Cancel buttons
+├── AnalysisPanel (AI Analysis tab)
+│   ├── File upload
+│   ├── Progress indicator
+│   └── Analyze button
+└── ResultsPanel (shared)
+    └── Results display
 ```
 
-### Key Architectural Patterns
+**Key Patterns:**
 
-1. **AI Integration via Local Ollama (100% Privacy)**
-   - Client in `backend/ai/ollama_client.py` with model fallback chains
-   - Primary model: `llama3.1:8b` (best reasoning, 105M downloads)
-   - Vision model: `qwen2.5-vl:7b` (state-of-the-art OCR, 75% accuracy vs GPT-4o)
-   - Fallback models: `deepseek-r1:1.5b` (ultra-fast), `llava:7b` (alternative vision)
-   - Latency tracking built-in: `latency_ms`, `total_requests`, `total_tokens`
-   - Usage stats endpoint: `GET /api/usage/stats` (shows latency instead of cost)
-   - Zero external API calls - all processing on local machine
+1. **UI Threading (Thread-Safe):**
+   - Main thread: UI rendering only
+   - Background threads: File search, AI analysis
+   - Thread safety: All UI updates via `self.after(0, callback)`
+   - Never block main thread
 
-2. **Search Pipeline**
-   - Filename search (`file_search.py`) → Content search (`content_search.py`)
-   - Natural language queries → AI parses to structured params → Traditional search
-   - Multi-threaded processing with configurable worker pools
+2. **Direct File Search (No API):**
+   - `core/file_search.py` runs directly in frontend
+   - No HTTP overhead, works without backend
+   - Supports cancellation and real-time progress
 
-3. **FastAPI Endpoints** (all in `main.py`)
-   - `POST /api/search/filename` - Filename-based search
-   - `POST /api/search/natural-language` - AI-powered natural language search (NL → structured params)
-   - `POST /api/search/content` - Content search in Excel/PDF files
-   - `POST /api/analyze` - AI document analysis (summary, trends, anomalies, insights)
-   - `POST /api/ocr` - OCR text extraction from images (Qwen2.5-VL 7B)
-   - `GET /api/usage/stats` - AI usage statistics (latency metrics)
-   - `GET /health` - Health check
+3. **Component Communication:**
+   - Callback-based architecture
+   - Parent passes callbacks to child components
+   - Child components call parent methods for actions
 
-4. **Threading & Concurrency**
-   - `ContentSearch` uses `concurrent.futures.ThreadPoolExecutor`
-   - Default workers: `max(1, os.cpu_count() // 2)`
-   - `cancel_event` threading for search cancellation
-   - Executor cleanup to prevent resource leaks
+4. **Health Polling:**
+   - Frontend checks backend health on startup
+   - Gracefully handles backend offline scenario
 
-5. **PDF Processing Strategy**
-   - Tries `pdfplumber` first (better for structured content)
-   - Falls back to `PyMuPDF` (fitz) for scanned/complex PDFs
-   - OCR support via `paddleocr` and `pytesseract` for scanned documents
+## API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/search/filename` | Async file search (returns search_id) |
+| POST | `/api/search/progress/{id}` | Poll search progress |
+| POST | `/api/search/results/{id}` | Get completed search results |
+| POST | `/api/search/content` | Search file contents |
+| POST | `/api/analyze` | Upload & analyze document |
+| POST | `/api/pii/mask` | Mask PII (optional) |
+| POST | `/api/pii/detect` | Detect PII (optional) |
+| POST | `/api/entities/extract` | Extract entities (optional) |
+| POST | `/api/ocr` | OCR from images |
+| GET | `/api/health` | Health check + service status |
+| GET | `/api/usage/stats` | Usage statistics |
+
+## Optional Features
+
+Install after setup as needed:
+
+```cmd
+uv pip install -e .[privacy]      # PII masking (Presidio)
+uv pip install -e .[ner]          # Entity extraction (GliNER)
+uv pip install -e .[chunking]     # Semantic chunking (Chonkie)
+uv pip install -e .[performance]  # Fast CSV (Polars)
+uv pip install -e .[all]          # Everything
+```
 
 ## Environment Variables
 
-Required in `.env` (never commit):
+Create `.env` file (never commit):
+
 ```env
-# Ollama Local AI Configuration (100% privacy - no external API calls)
-# Install Ollama from https://ollama.com
-# Download models: ollama pull llama3.1:8b && ollama pull qwen2.5-vl:7b
+# Ollama Configuration (100% privacy - no external APIs)
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_VISION_MODEL=qwen2.5-vl:7b
+OLLAMA_MODEL=phi4-mini                    # Primary model (fast CPU inference)
+OLLAMA_VISION_MODEL=deepseek-ocr
 OLLAMA_TEMPERATURE=0.3
-OLLAMA_MAX_TOKENS=2000
+OLLAMA_MAX_TOKENS=500
+OLLAMA_CONTEXT_SIZE=1024
+OLLAMA_KEEP_ALIVE=-1                      # -1: Keep loaded forever, 0: unload immediately, "5m": 5 minutes
 
-# App Configuration
-APP_NAME=FindingExcellence_PRO
-APP_VERSION=2.0.0
-
-# Search Settings
-DEFAULT_SEARCH_FOLDERS=C:\Users\Desktop,C:\Users\Downloads
+# Application Settings
+DEFAULT_SEARCH_FOLDERS=C:\Users\jrodeiro\Desktop,C:\Users\jrodeiro\Downloads
 MAX_WORKERS=4
+BACKEND_PORT=8000
 LOG_LEVEL=INFO
 ```
 
-## Windows-Specific Considerations
+## Ollama Setup
 
-1. **Batch Scripts are Windows CMD only**
-   - Do NOT run in PowerShell, Git Bash, or WSL
-   - Use Windows Command Prompt exclusively
-   - Path separators: Use backslashes (`\`) in batch files
-
-2. **Python Virtual Environment**
-   - Located at `venv/` (gitignored)
-   - Activated via `venv\Scripts\activate.bat`
-   - Managed by `venv-manage.bat` for clean operations
-
-3. **Service Management**
-   - `start-all.bat` opens separate CMD windows for each service
-   - `stop-all.bat` uses `taskkill` to clean up processes
-   - Ports: Backend 8000, Frontend 5173
-
-## Security & Best Practices
-
-1. **Virtual Environment Isolation**
-   - All Python deps in isolated `venv/`
-   - Regular security audits with `pip-audit` via `venv-manage.bat audit`
-   - Never commit `.env` files or `venv/` directory
-
-2. **Complete Data Privacy (Local AI)**
-   - No external API calls - all AI processing on local machine
-   - File paths and content never leave the device
-   - Ollama host configured via `OLLAMA_HOST` environment variable
-   - Models downloaded locally (~10GB total for text + vision)
-
-3. **Input Validation**
-   - Pydantic models for all API requests
-   - File path validation in processors
-   - Case-sensitive search optional
-
-## Common Development Workflows
-
-### Adding a New AI Feature
-1. Add model/prompt logic to `backend/ai/ai_services.py`
-2. Create endpoint in `backend/main.py` with Pydantic request model
-3. Update `backendClient.js` in frontend
-4. Add UI component in `frontend/src/components/`
-5. Wire up in `App.jsx`
-
-### Adding a New File Type Processor
-1. Create processor in `backend/core/` (e.g., `word_processor.py`)
-2. Define `SUPPORTED_EXTENSIONS` tuple
-3. Implement `extract_text()` and `search_content()` methods
-4. Update `file_search.py` and `content_search.py` to use new processor
-5. Add to `FileSearchRequest.file_types` in `main.py`
-
-### Debugging Search Issues
-1. Check logs: `finding_excellence.log` in project root
-2. Verify backend running: `http://localhost:8000/health`
-3. Test API directly: `http://localhost:8000/docs` (FastAPI auto-docs)
-4. Check worker threads: Adjust `MAX_WORKERS` in `.env`
-
-## Build & Deployment
-
-### Backend Packaging
 ```cmd
-# Build with PyInstaller (spec file: backend.spec)
-pyinstaller backend.spec
+# After installing Ollama from https://ollama.com
+ollama pull phi4-mini         # Primary model (~2.5GB, fast CPU inference)
+ollama pull deepseek-ocr      # Vision/OCR (~3GB, 97% accuracy)
 
-# Output: dist/FindingExcellence_Backend/
+# Total: ~5.5GB
 ```
 
-### Frontend Packaging
-```cmd
-cd frontend
-pnpm run build-electron
+Ollama runs as Windows background service. Backend gracefully degrades if unavailable.
 
-# Output: dist/ (NSIS installer + portable exe)
-# Config: electron-builder.json
+## Adding New Features
+
+### New File Type Processor
+
+**1. Create handler** (`backend/core/new_handler.py`):
+```python
+class NewHandler:
+    SUPPORTED_EXTENSIONS = ('.newext',)
+
+    @staticmethod
+    def read_new_format(file_path: str) -> tuple[str, str | None]:
+        """Extract text from new format.
+
+        Returns:
+            (content, error) - content is str, error is None on success
+        """
+        try:
+            # Extract text logic here
+            content = extract_text(file_path)
+            return content, None
+        except Exception as e:
+            return "", str(e)
 ```
 
-### Distribution
-- Electron app includes bundled backend executable
-- Resources in `resources/` directory (icons, assets)
-- Installer options: NSIS (installable) or portable
+**2. Register in** `backend/main.py` (in `/api/analyze` endpoint):
+```python
+file_ext = Path(file.filename).suffix.lower()
 
-## API Documentation
+if file_ext == '.newext':
+    extracted_text, error = NewHandler.read_new_format(str(temp_path))
+    if error:
+        raise HTTPException(status_code=400, detail=f"Error: {error}")
+```
 
-When backend is running, visit:
-- **Interactive docs**: http://localhost:8000/docs (Swagger UI)
-- **Alternative docs**: http://localhost:8000/redoc (ReDoc)
+**3. Add test** in `backend/tests/test_core.py`
 
-## Dependencies
+### New API Endpoint
 
-### Backend (Python 3.8+)
-- FastAPI, uvicorn - Web framework
-- pandas, openpyxl, xlrd - Excel processing
-- pdfplumber, PyMuPDF, camelot - PDF processing
-- paddleocr, pytesseract - OCR for scanned PDFs
-- openai (for OpenRouter), httpx - AI integration
+**1. Add endpoint in** `backend/main.py`:
+```python
+class MyRequest(BaseModel):
+    data: str
 
-### Frontend (Node.js 18+)
-- React 18, React DOM
-- Electron 27 - Desktop wrapper
-- Vite 5 - Build tool
-- Tailwind CSS - Styling
-- axios - HTTP client
-- pnpm - Package manager
+@app.post("/api/my-feature")
+async def my_feature(request: MyRequest):
+    try:
+        result = do_something(request.data)
+        return {"success": True, "result": result}
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+**2. Add client method in** `frontend_desktop/api_client.py`:
+```python
+def my_feature(self, data: str) -> Dict[str, Any]:
+    """Call my feature endpoint."""
+    try:
+        response = self.session.post(
+            urljoin(self.host, "/api/my-feature"),
+            json={"data": data},
+            timeout=self.timeout
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"API call failed: {e}")
+        return {"success": False, "error": str(e)}
+```
+
+**3. Call from UI component** (e.g., `frontend_desktop/ui/my_panel.py`):
+```python
+def _on_button_click(self):
+    # Run in background thread to avoid blocking UI
+    self.my_thread = threading.Thread(
+        target=self._run_my_feature,
+        daemon=True
+    )
+    self.my_thread.start()
+
+def _run_my_feature(self):
+    result = self.app.api_client.my_feature("input_data")
+    self.after(0, lambda: self._display_result(result))
+
+def _display_result(self, result):
+    """Update UI with result (runs on main thread)"""
+    if result.get("success"):
+        self.result_label.configure(text=result["result"])
+```
+
+### New Desktop Tab
+
+**1. Create panel** (`frontend_desktop/ui/my_panel.py`):
+```python
+import customtkinter as ctk
+from typing import Callable
+
+class MyPanel(ctk.CTkFrame):
+    def __init__(self, parent, on_action_callback: Callable, on_status_callback: Callable):
+        super().__init__(parent)
+        self.on_action = on_action_callback
+        self.on_status = on_status_callback
+        self._build_ui()
+
+    def _build_ui(self):
+        # Create widgets
+        button = ctk.CTkButton(self, text="Action", command=self._on_button_click)
+        button.pack(padx=10, pady=10)
+
+    def _on_button_click(self):
+        self.on_action()  # Call parent callback
+        self.on_status("Processing...")  # Update status
+```
+
+**2. Add tab in** `frontend_desktop/ui/main_window.py`:
+```python
+# In _build_ui() method
+my_tab = self.tabview.add("My Tab")
+self.my_panel = MyPanel(
+    my_tab,
+    on_action_callback=self._on_my_action,
+    on_status_callback=self._update_status
+)
+self.my_panel.pack(fill="both", expand=True)
+
+# Add callback in main window
+def _on_my_action(self):
+    # Start background work
+    self.my_thread = threading.Thread(target=self._run_my_work, daemon=True)
+    self.my_thread.start()
+
+def _run_my_work(self):
+    # Background work here
+    result = do_work()
+    self.after(0, lambda: self._on_my_work_complete(result))
+
+def _on_my_work_complete(self, result):
+    self.results_panel.display_results(result)
+```
+
+## Important Notes
+
+- **Windows CMD only** - .bat scripts don't work in PowerShell/Git Bash
+- **Backend must run first** - Frontend checks health on startup
+- **Port 8000** - Backend runs on 8000 (not 8001)
+- **Python 3.12 minimum** - Required for all dependencies
+- **All local** - No external API keys or cloud services needed
+- **Models**: phi4-mini is primary (faster), qwen3:4b-instruct is fallback
+- **Model warmup**: First request to backend triggers model warmup (~30s), subsequent requests are fast

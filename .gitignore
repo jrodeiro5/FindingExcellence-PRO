@@ -1,53 +1,79 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
 
 # Python
-venv/
 __pycache__/
 *.py[cod]
 *$py.class
-*.egg-info/
+*.so
+.Python
 dist/
 build/
-*.egg
+*.egg-info/
 .pytest_cache/
 .coverage
 htmlcov/
-*.log
 
-# Node/Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-frontend/out/
-
-# IDE
+# IDE & Personal Tools
 .vscode/
 .idea/
+.zed/
+.cursor/
+.cursorrules
+.claude/
 *.swp
 *.swo
 *~
 .DS_Store
 
-# Electron
-frontend/dist/
-frontend/dist-electron/
-
-# Build outputs
-backend/dist/
-backend/build/
+# Environment & Config
+.env
+.env.local
+.env.*.local
 
 # Logs
-finding_excellence.log
 *.log
+finding_excellence.log
+finding_excellence_desktop.log
 
-# Ollama models (too large to commit)
-.ollama/
-models/
-
-# Temporary files
+# Temp files
+temp_uploads/
 *.tmp
-*.temp
-.cache/
+nul
+
+# OS
+Thumbs.db
+.DS_Store
+
+# uv
+.uv/
+
+# Documentation (local/personal)
+docs/
+CLAUDE.md
+README_MIGRATION.md
+MIGRATION_SUMMARY.md
+NEXT_STEPS.md
+CHECKLIST.md
+CHANGELOG.md
+*.md
+
+# Batch/Setup scripts (local dev only)
+*.bat
+*.ps1
+
+# Build artifacts
+build.ps1
+build.sh
+
+# MCP and Tool configs
+mcp.json
+*.mcp.json
+
+# Misc personal files
+activate.bat
+nul
+.*.json

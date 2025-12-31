@@ -1,0 +1,127 @@
+[project]
+name = "findingexcellence-pro"
+version = "2.0.0"
+description = "Privacy-first intelligent file search with local AI (100% local, zero external APIs)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "FindingExcellence Team"}
+]
+keywords = ["search", "ai", "privacy", "excel", "pdf", "ollama", "pii", "ner"]
+
+dependencies = [
+    # Core Framework
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.6",
+    "websockets>=12.0",
+    "pydantic>=2.6.0",
+
+    # Data Processing - Excel
+    "pandas>=2.3.2",
+    "openpyxl>=3.1.5",
+    "xlrd>=2.0.1",
+
+    # PDF Processing (native text extraction)
+    "pdfplumber>=0.11.0",
+    "PyMuPDF>=1.24.0",
+
+    # Image Processing (for Ollama vision models)
+    "Pillow>=10.2.0",
+
+    # AI Integration - 100% Local (Ollama)
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+
+    # System Monitoring
+    "psutil>=5.9.0",
+
+    # Logging (structured, colorful, auto-rotating)
+    "loguru>=0.7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21",
+    "pytest-mock>=3.10",
+    "ruff>=0.1.0",
+    "basedpyright>=1.1.0",
+]
+
+# Phase 3+ features (PII, NER, chunking, Polars)
+privacy = [
+    "presidio-analyzer>=2.2.0",
+    "presidio-anonymizer>=2.2.0",
+    "spacy>=3.0.0",
+]
+
+ner = [
+    "gliner>=0.2.0",
+]
+
+chunking = [
+    "chonkie>=0.1.0",
+]
+
+performance = [
+    "polars>=1.0.0",
+]
+
+logging = [
+    # loguru moved to core dependencies
+    "rich>=13.7.0",  # Optional: enhanced console output
+]
+
+all = [
+    "findingexcellence-pro[dev,privacy,ner,chunking,performance,logging]",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["backend"]
+
+[tool.setuptools.package-data]
+backend = ["**/*.py"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function calls in argument defaults
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+]
