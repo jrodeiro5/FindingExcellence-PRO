@@ -23,6 +23,7 @@ except ImportError:
     from core.file_search import FileSearch
 
 from .analysis_panel import AnalysisPanel
+from .interactive_results import InteractiveResultsPanel
 from .results_panel import ResultsPanel
 from .search_panel import SearchPanel
 
@@ -112,8 +113,11 @@ class ExcelFinderApp(ctk.CTk):
         )
         self.analysis_panel.pack(fill="both", expand=True)
 
-        # Results panel (shared between tabs)
-        self.results_panel = ResultsPanel(content_frame)
+        # Results panel (shared between tabs) - now interactive with context menu
+        self.results_panel = InteractiveResultsPanel(
+            content_frame,
+            on_status_callback=self._update_status
+        )
         self.results_panel.pack(fill="both", expand=True, pady=(10, 0))
 
         # Progress bar (hidden initially)
@@ -187,6 +191,9 @@ class ExcelFinderApp(ctk.CTk):
             if end_date:
                 parsed_end = datetime.strptime(end_date, '%Y-%m-%d').date()
 
+            # Check if using cache (file_search.index is available)
+            is_cached = hasattr(self.file_search, 'index') and self.file_search.index is not None
+
             results = self.file_search.search_by_filename(
                 folder_paths=folders,
                 filename_keywords=keywords,
@@ -197,8 +204,8 @@ class ExcelFinderApp(ctk.CTk):
                 status_callback=self._on_search_status
             )
 
-            # Update UI on main thread
-            self.after(0, lambda: self._on_search_complete(results))
+            # Update UI on main thread with cache status
+            self.after(0, lambda r=results, c=is_cached: self._on_search_complete(r, c))
 
         except Exception as e:
             logger.error(f"Search error: {e}")
@@ -214,7 +221,7 @@ class ExcelFinderApp(ctk.CTk):
         self.cancel_event.set()
         self._update_status("Cancelling search...", color="#FF6B6B")
 
-    def _on_search_complete(self, results: list):
+    def _on_search_complete(self, results: list, is_cached: bool = False):
         """Called when search finishes."""
         # Stop progress bar
         self.progress_bar.stop()
@@ -227,10 +234,11 @@ class ExcelFinderApp(ctk.CTk):
         if self.cancel_event.is_set():
             self._update_status(f"Search cancelled. Found {len(results)} files.", color="#FFB347")
         else:
-            self._update_status(f"Found {len(results)} files", color="#52CC52")
+            cache_indicator = "📦 (cached)" if is_cached else "🔍 (live)"
+            self._update_status(f"Found {len(results)} files {cache_indicator}", color="#52CC52")
 
-        # Display results
-        self.results_panel.display_results(results)
+        # Display results with cache status
+        self.results_panel.display_results(results, is_cached=is_cached)
 
     def _on_search_error(self, error: str):
         """Called when search encounters an error."""
@@ -372,6 +380,9 @@ class ExcelFinderApp(ctk.CTk):
 
         # Also update the shared results panel
         self.results_panel.display_analysis_result(result)
+
+        # Ensure results panel is visible
+        self.tabview.set("Analysis Tab" if hasattr(self, '_analysis_tab_name') else "File Search")
 
     def _on_analysis_error(self, error: str):
         """Called when analysis encounters an error."""
