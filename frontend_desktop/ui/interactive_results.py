@@ -92,7 +92,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             cursor="hand2",
             width=120
         )
-        modified_header.pack(side="left", padx=5, width=120)
+        modified_header.pack(side="left", padx=5)
         modified_header.bind("<Button-1>", lambda e: self._sort_results("modified"))
 
         # Type header
@@ -104,7 +104,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             cursor="hand2",
             width=50
         )
-        type_header.pack(side="left", padx=5, width=50)
+        type_header.pack(side="left", padx=5)
         type_header.bind("<Button-1>", lambda e: self._sort_results("type"))
 
         # Store header references for updating sort indicators
