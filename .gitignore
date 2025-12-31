@@ -61,9 +61,22 @@ CHECKLIST.md
 CHANGELOG.md
 *.md
 
-# Batch/Setup scripts (local dev only)
-*.bat
+# Batch/Setup scripts (local dev only, except main startup scripts)
+activate.bat
 *.ps1
+uv-setup.bat
+check-dependencies.bat
+download-models*.bat
+pull-models*.bat
+venv-manage.bat
+setup-*.bat
+setup-cmd.bat
+run-*.bat
+test-*.bat
+
+# Keep main startup/stop scripts
+!start.bat
+!stop.bat
 
 # Build artifacts
 build.ps1
