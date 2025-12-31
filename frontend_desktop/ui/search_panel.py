@@ -100,8 +100,9 @@ class SearchPanel(ctk.CTkFrame):
             variable=self.case_sensitive_var,
             font=FONTS["small"],
             text_color=COLORS["text_primary"],
-            checkbox_bg_color=COLORS["primary"],
-            checkmark_color=COLORS["background"]
+            fg_color=COLORS["primary"],
+            hover_color="#0000A8",
+            border_color=COLORS["primary"]
         )
         self.case_sensitive_check.pack(side="left", padx=(10, 0))
 
