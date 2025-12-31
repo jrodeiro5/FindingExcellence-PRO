@@ -8,12 +8,14 @@ from typing import Any, Callable, Dict, List, Optional
 
 import customtkinter as ctk
 
+from ..branding import COLORS
+
 
 class InteractiveResultsPanel(ctk.CTkFrame):
     """Interactive results table with file operations (copy, open, etc)."""
 
     def __init__(self, parent, on_status_callback: Optional[Callable] = None):
-        super().__init__(parent, fg_color="#1a1a1a")
+        super().__init__(parent, fg_color=COLORS["background"])
         self.on_status = on_status_callback or (lambda x: None)
         self.results: List[Dict[str, Any]] = []
         self.selected_row: Optional[int] = None
@@ -23,7 +25,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         self._build_ui()
 
     def _build_ui(self):
-        """Build interactive results panel layout."""
+        """Build interactive results panel layout with Ayesa branding."""
         # Header frame
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
         header_frame.pack(fill="x", padx=15, pady=(15, 10))
@@ -31,7 +33,8 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         self.title_label = ctk.CTkLabel(
             header_frame,
             text="Results",
-            font=("Arial", 12, "bold")
+            font=("Arial", 12, "bold"),
+            text_color=COLORS["primary"]
         )
         self.title_label.pack(side="left")
 
@@ -39,7 +42,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_frame,
             text="",
             font=("Arial", 10),
-            text_color="#888888"
+            text_color=COLORS["text_secondary"]
         )
         self.count_label.pack(side="left", padx=(20, 0))
 
@@ -48,16 +51,16 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_frame,
             text="",
             font=("Arial", 9),
-            text_color="#888888"
+            text_color=COLORS["text_secondary"]
         )
         self.cache_label.pack(side="right")
 
         # Results container (Treeview-like table using Frame + Listbox)
-        table_frame = ctk.CTkFrame(self, fg_color="#0a0a0a")
+        table_frame = ctk.CTkFrame(self, fg_color=COLORS["surface"], border_width=1, border_color=COLORS["border"])
         table_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         # Column headers (clickable for sorting)
-        header_row = ctk.CTkFrame(table_frame, fg_color="#2a2a2a", height=25)
+        header_row = ctk.CTkFrame(table_frame, fg_color=COLORS["primary"], height=25)
         header_row.pack(fill="x")
         header_row.pack_propagate(False)
 
@@ -66,7 +69,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_row,
             text="Filename ▼",
             font=("Arial", 10, "bold"),
-            text_color="#FFFFFF",
+            text_color=COLORS["background"],
             cursor="hand2"
         )
         filename_header.pack(side="left", padx=8, fill="x", expand=True)
@@ -77,7 +80,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_row,
             text="Path",
             font=("Arial", 10, "bold"),
-            text_color="#CCCCCC",
+            text_color=COLORS["background"],
             cursor="hand2"
         )
         path_header.pack(side="left", padx=8, fill="x", expand=True)
@@ -88,7 +91,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_row,
             text="Modified",
             font=("Arial", 10, "bold"),
-            text_color="#CCCCCC",
+            text_color=COLORS["background"],
             cursor="hand2",
             width=130
         )
@@ -100,7 +103,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             header_row,
             text="Type",
             font=("Arial", 10, "bold"),
-            text_color="#CCCCCC",
+            text_color=COLORS["background"],
             cursor="hand2",
             width=60
         )
@@ -126,7 +129,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         # Results canvas for scrolling
         self.canvas = tk.Canvas(
             self.list_frame,
-            bg="#0a0a0a",
+            bg=COLORS["surface"],
             highlightthickness=0,
             yscrollcommand=scrollbar.set
         )
@@ -134,7 +137,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         scrollbar.configure(command=self.canvas.yview)
 
         # Inner frame for results
-        self.inner_frame = ctk.CTkFrame(self.canvas, fg_color="#0a0a0a")
+        self.inner_frame = ctk.CTkFrame(self.canvas, fg_color=COLORS["surface"])
         self.canvas_window = self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
         # Bind mousewheel for scrolling
@@ -204,7 +207,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
                 self.inner_frame,
                 text="No files found.",
                 font=("Arial", 11),
-                text_color="#888888"
+                text_color=COLORS["text_secondary"]
             )
             empty_label.pack(padx=10, pady=20)
             self.count_label.configure(text="0 files")
@@ -229,7 +232,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
 
     def _create_result_row(self, index: int, file_info: Dict[str, Any]):
         """Create an interactive result row."""
-        row_frame = ctk.CTkFrame(self.inner_frame, fg_color="#1a1a1a", height=48)
+        row_frame = ctk.CTkFrame(self.inner_frame, fg_color=COLORS["background"], height=48)
         row_frame.pack(fill="x", padx=2, pady=2)
         row_frame.pack_propagate(False)
 
@@ -247,7 +250,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             row_frame,
             text=filename,
             font=("Courier", 10),
-            text_color="#FFFFFF",
+            text_color=COLORS["primary"],
             anchor="w"
         )
         filename_label.pack(side="left", padx=8, fill="x", expand=True)
@@ -258,7 +261,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             row_frame,
             text=truncated_path,
             font=("Courier", 9),
-            text_color="#BBBBBB",
+            text_color=COLORS["text_secondary"],
             anchor="w"
         )
         path_label.pack(side="left", padx=8, fill="x", expand=True)
@@ -268,7 +271,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             row_frame,
             text=modified[:10] if modified else "",
             font=("Courier", 9),
-            text_color="#999999",
+            text_color=COLORS["text_secondary"],
             width=130
         )
         modified_label.pack(side="left", padx=8)
@@ -278,7 +281,7 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             row_frame,
             text=file_type[:6],
             font=("Courier", 9),
-            text_color="#777777",
+            text_color=COLORS["text_secondary"],
             width=60
         )
         type_label.pack(side="left", padx=8)
@@ -302,18 +305,18 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         # Remove previous selection
         for widget in self.inner_frame.winfo_children():
             if isinstance(widget, ctk.CTkFrame):
-                widget.configure(fg_color="#1a1a1a")
+                widget.configure(fg_color=COLORS["background"])
 
         # Highlight selected row
-        row_frame.configure(fg_color="#2a4a6a")
+        row_frame.configure(fg_color="#E8E8F5")
         self.selected_row = row_frame.index
 
     def _highlight_row(self, row_frame, is_hover):
         """Highlight row on hover."""
         if is_hover and row_frame != self.selected_row:
-            row_frame.configure(fg_color="#252525")
+            row_frame.configure(fg_color="#F5F5F9")
         elif not is_hover and row_frame != self.selected_row:
-            row_frame.configure(fg_color="#1a1a1a")
+            row_frame.configure(fg_color=COLORS["background"])
 
     def _on_double_click(self, row_frame):
         """Open file on double-click."""
@@ -337,8 +340,15 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             self.on_status("File no longer exists")
             return
 
-        # Create context menu
-        context_menu = tk.Menu(self.canvas, tearoff=False, bg="#2a2a2a", fg="#FFFFFF")
+        # Create context menu with Ayesa branding
+        context_menu = tk.Menu(
+            self.canvas,
+            tearoff=False,
+            bg=COLORS["surface"],
+            fg=COLORS["text_primary"],
+            activebackground=COLORS["primary"],
+            activeforeground=COLORS["background"]
+        )
 
         context_menu.add_command(
             label="📋 Copy Full Path",
@@ -411,20 +421,21 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         for widget in self.inner_frame.winfo_children():
             widget.destroy()
 
-        # Add analysis text
+        # Add analysis text with Ayesa branding
         text_widget = tk.Text(
             self.inner_frame,
-            bg="#1a1a1a",
-            fg="#FFFFFF",
+            bg=COLORS["surface"],
+            fg=COLORS["text_primary"],
             font=("Courier", 9),
             wrap="word",
-            height=20
+            height=20,
+            insertbackground=COLORS["primary"]
         )
         text_widget.pack(fill="both", expand=True, padx=10, pady=10)
         text_widget.insert("1.0", result)
         text_widget.configure(state="disabled")
 
-        self.title_label.configure(text="Analysis Results")
+        self.title_label.configure(text="Analysis Results", text_color=COLORS["primary"])
         lines = result.count("\n")
         self.count_label.configure(text=f"{lines} lines")
 

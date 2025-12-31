@@ -8,6 +8,8 @@ from typing import Callable, List, Optional
 
 import customtkinter as ctk
 
+from ..branding import COLORS, FONTS
+
 
 class SearchPanel(ctk.CTkFrame):
     """File search panel with keyword input and folder selection."""
@@ -46,12 +48,13 @@ class SearchPanel(ctk.CTkFrame):
         ]
 
     def _build_ui(self):
-        """Build search panel layout."""
+        """Build search panel layout with Ayesa branding."""
         # Title
         title = ctk.CTkLabel(
             self,
             text="File Search",
-            font=("Arial", 12, "bold")
+            font=FONTS["heading"],
+            text_color=COLORS["primary"]
         )
         title.pack(padx=15, pady=(10, 5), anchor="w")
 
@@ -59,12 +62,22 @@ class SearchPanel(ctk.CTkFrame):
         keyword_frame = ctk.CTkFrame(self, fg_color="transparent")
         keyword_frame.pack(fill="x", padx=15, pady=5)
 
-        ctk.CTkLabel(keyword_frame, text="Keywords:", font=("Arial", 11)).pack(side="left", padx=(0, 10))
+        ctk.CTkLabel(
+            keyword_frame,
+            text="Keywords:",
+            font=FONTS["body"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 10))
+
         self.keyword_entry = ctk.CTkEntry(
             keyword_frame,
             placeholder_text="e.g., invoice, report, data...",
             height=35,
-            font=("Arial", 11)
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
         )
         self.keyword_entry.pack(side="left", fill="x", expand=True)
         self.keyword_entry.bind("<Return>", lambda e: self._on_search_clicked())
@@ -75,7 +88,10 @@ class SearchPanel(ctk.CTkFrame):
             keyword_frame,
             text="Case Sensitive",
             variable=self.case_sensitive_var,
-            font=("Arial", 10)
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"],
+            checkbox_bg_color=COLORS["primary"],
+            checkmark_color=COLORS["background"]
         )
         self.case_sensitive_check.pack(side="left", padx=(10, 0))
 
@@ -83,27 +99,50 @@ class SearchPanel(ctk.CTkFrame):
         date_frame = ctk.CTkFrame(self, fg_color="transparent")
         date_frame.pack(fill="x", padx=15, pady=4)
 
-        ctk.CTkLabel(date_frame, text="Date:", font=("Arial", 9)).pack(side="left", padx=(0, 5))
+        ctk.CTkLabel(
+            date_frame,
+            text="Date:",
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 5))
 
         # Start date
-        ctk.CTkLabel(date_frame, text="From:", font=("Arial", 9)).pack(side="left", padx=(5, 2))
+        ctk.CTkLabel(
+            date_frame,
+            text="From:",
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(5, 2))
         self.start_date_entry = ctk.CTkEntry(
             date_frame,
             placeholder_text="YYYY-MM-DD",
             width=95,
             height=25,
-            font=("Arial", 9)
+            font=FONTS["small"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
         )
         self.start_date_entry.pack(side="left", padx=(0, 5))
 
         # End date
-        ctk.CTkLabel(date_frame, text="To:", font=("Arial", 9)).pack(side="left", padx=(5, 2))
+        ctk.CTkLabel(
+            date_frame,
+            text="To:",
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(5, 2))
         self.end_date_entry = ctk.CTkEntry(
             date_frame,
             placeholder_text="YYYY-MM-DD",
             width=95,
             height=25,
-            font=("Arial", 9)
+            font=FONTS["small"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
         )
         self.end_date_entry.pack(side="left", padx=(0, 5))
 
@@ -113,7 +152,10 @@ class SearchPanel(ctk.CTkFrame):
             text="Clear",
             width=50,
             height=25,
-            font=("Arial", 8),
+            font=FONTS["small"],
+            fg_color=COLORS["accent"],
+            text_color=COLORS["background"],
+            hover_color="#E01670",
             command=self._clear_dates
         )
         self.clear_dates_button.pack(side="left", padx=(2, 0))
@@ -122,19 +164,22 @@ class SearchPanel(ctk.CTkFrame):
         folder_label = ctk.CTkLabel(
             self,
             text="Folders:",
-            font=("Arial", 9)
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
         )
         folder_label.pack(padx=15, pady=(5, 2), anchor="w")
 
         # Folder display (scrollable)
-        folder_frame = ctk.CTkFrame(self, fg_color="#2a2a2a")
+        folder_frame = ctk.CTkFrame(self, fg_color=COLORS["surface"], border_width=1, border_color=COLORS["border"])
         folder_frame.pack(fill="x", padx=15, pady=2)
 
         self.folder_text = ctk.CTkTextbox(
             folder_frame,
             height=60,
-            font=("Arial", 10),
-            wrap="word"
+            font=FONTS["small"],
+            wrap="word",
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"]
         )
         self.folder_text.pack(fill="both", expand=True, padx=5, pady=5)
         self.folder_text.configure(state="disabled")
@@ -151,7 +196,10 @@ class SearchPanel(ctk.CTkFrame):
             text="Browse",
             width=70,
             height=24,
-            font=("Arial", 9),
+            font=FONTS["small"],
+            fg_color=COLORS["primary"],
+            text_color=COLORS["background"],
+            hover_color="#0000A8",
             command=self._browse_folder
         ).pack(side="left", padx=(0, 5))
 
@@ -160,7 +208,10 @@ class SearchPanel(ctk.CTkFrame):
             text="Clear All",
             width=70,
             height=24,
-            font=("Arial", 9),
+            font=FONTS["small"],
+            fg_color=COLORS["accent"],
+            text_color=COLORS["background"],
+            hover_color="#E01670",
             command=self._clear_folders
         ).pack(side="left", padx=(0, 5))
 
@@ -173,7 +224,10 @@ class SearchPanel(ctk.CTkFrame):
             self.button_container,
             text="Search",
             height=40,
-            font=("Arial", 12, "bold"),
+            font=FONTS["heading"],
+            fg_color=COLORS["primary"],
+            text_color=COLORS["background"],
+            hover_color="#0000A8",
             command=self._on_search_clicked
         )
         self.search_button.pack(fill="x")
@@ -183,9 +237,10 @@ class SearchPanel(ctk.CTkFrame):
             self.button_container,
             text="Cancel Search",
             height=40,
-            font=("Arial", 12, "bold"),
-            fg_color="#FF6B6B",
-            hover_color="#FF4444",
+            font=FONTS["heading"],
+            fg_color=COLORS["accent"],
+            text_color=COLORS["background"],
+            hover_color="#E01670",
             command=self._on_cancel_clicked
         )
         # Don't pack yet - will show when search starts

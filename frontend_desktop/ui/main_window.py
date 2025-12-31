@@ -22,6 +22,7 @@ except ImportError:
     from api_client import BackendClient
     from core.file_search import FileSearch
 
+from ..branding import COLORS, FONTS, THEME
 from .analysis_panel import AnalysisPanel
 from .interactive_results import InteractiveResultsPanel
 from .results_panel import ResultsPanel
@@ -37,9 +38,9 @@ class ExcelFinderApp(ctk.CTk):
         super().__init__()
 
         # Window setup
-        self.title("FindingExcellence PRO v2.0")
+        self.title("FindingExcellence PRO - Powered by Ayesa")
         self.geometry("900x700")
-        ctk.set_appearance_mode("dark")
+        ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
         # Backend client (for AI features only)
@@ -65,29 +66,37 @@ class ExcelFinderApp(ctk.CTk):
 
     def _build_ui(self):
         """Build main UI layout."""
-        # Header
-        header = ctk.CTkFrame(self, fg_color="#1a1a1a", height=40)
+        # Header with Ayesa branding
+        header = ctk.CTkFrame(self, fg_color=COLORS["primary"], height=50)
         header.pack(side="top", fill="x", padx=0, pady=0)
         header.pack_propagate(False)
 
         title = ctk.CTkLabel(
             header,
-            text="FindingExcellence PRO v2.0",
-            font=("Arial", 16, "bold"),
-            text_color="white"
+            text="FindingExcellence PRO",
+            font=FONTS["title"],
+            text_color=COLORS["background"]
         )
         title.pack(side="left", padx=20, pady=10)
+
+        subtitle = ctk.CTkLabel(
+            header,
+            text="Powered by Ayesa",
+            font=FONTS["small"],
+            text_color=COLORS["accent"]
+        )
+        subtitle.pack(side="left", padx=5, pady=10)
 
         self.status_label = ctk.CTkLabel(
             header,
             text="Ready",
-            font=("Arial", 11),
-            text_color="#52CC52"
+            font=FONTS["body"],
+            text_color=COLORS["background"]
         )
         self.status_label.pack(side="right", padx=20, pady=10)
 
-        # Main content area
-        content_frame = ctk.CTkFrame(self)
+        # Main content area with light background
+        content_frame = ctk.CTkFrame(self, fg_color=COLORS["background"])
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Main container for tabs and results
