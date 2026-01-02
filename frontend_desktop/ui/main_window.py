@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 import customtkinter as ctk
+from PIL import Image
 
 # Handle relative imports for both package and direct execution
 try:
@@ -102,12 +103,10 @@ class ExcelFinderApp(ctk.CTk):
         header_image_path = Path(__file__).parent.parent.parent / "assets" / "headers" / "ayesa_header_small_240x60.png"
         if header_image_path.exists():
             try:
-                from PIL import Image, ImageTk
-                # Load and display header image
-                img = Image.open(str(header_image_path))
-                photo = ImageTk.PhotoImage(img)
-                header_img_label = ctk.CTkLabel(header_left, image=photo, text="")
-                header_img_label.image = photo  # Keep a reference to prevent garbage collection
+                # Load and display header image using CTkImage for proper HiDPI support
+                header_ctk_image = ctk.CTkImage(light_image=Image.open(str(header_image_path)), size=(240, 60))
+                header_img_label = ctk.CTkLabel(header_left, image=header_ctk_image, text="")
+                header_img_label.image = header_ctk_image  # Keep a reference to prevent garbage collection
                 header_img_label.pack(side="left", padx=0, pady=0)
             except Exception as e:
                 logger.warning(f"Could not load header image: {e}")
