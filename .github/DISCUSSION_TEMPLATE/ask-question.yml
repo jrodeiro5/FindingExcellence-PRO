@@ -1,0 +1,55 @@
+title: "Q: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # ❓ Question
+
+        Thank you for using FindingExcellence PRO! Please ask your question here.
+
+        **Built with ❤️ by [Ayesa](https://www.ayesa.com)**
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What's your question?
+      description: Please provide a clear and detailed description of your question.
+      placeholder: |
+        I'm trying to... and I'm wondering how to...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Setup & Installation
+        - File Search
+        - AI Analysis
+        - Performance
+        - Privacy & Security
+        - Development
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any relevant context or screenshots
+      placeholder: |
+        - Operating system: Windows 10/11
+        - Python version: 3.12+
+        - Has Ollama installed: Yes/No
+
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Have you searched for similar questions?
+      options:
+        - label: "Yes, I searched the discussions and didn't find an answer"
+          required: true
