@@ -87,7 +87,8 @@ class AnalysisPanel(ctk.CTkFrame):
         super().__init__(parent)
         self.on_analysis = on_analysis_callback
         self.on_status = on_status_callback
-        self.selected_file: Optional[str] = None
+        self.selected_files: list = []  # Support multiple files
+        self.selected_file: Optional[str] = None  # For backward compatibility (single file)
         self.analysis_type: str = "summary"  # Default analysis type
 
         self._build_ui()
@@ -106,7 +107,7 @@ class AnalysisPanel(ctk.CTkFrame):
         # Instructions
         instructions = ctk.CTkLabel(
             self,
-            text="Upload PDF, CSV, or Excel files for intelligent analysis",
+            text="Upload documents for intelligent AI analysis",
             font=FONTS["body"],
             text_color=COLORS["text_secondary"]
         )
@@ -142,7 +143,7 @@ class AnalysisPanel(ctk.CTkFrame):
         # File type info
         file_types_label = ctk.CTkLabel(
             file_frame,
-            text="Supported: PDF, CSV (.csv), Excel (.xlsx, .xls)",
+            text="Supported: PDF, CSV, Excel (.xlsx, .xls), Word (.docx), PowerPoint (.pptx), JSON, Markdown (.md), Text (.txt)",
             font=FONTS["small"],
             text_color=COLORS["text_secondary"]
         )
@@ -201,27 +202,43 @@ class AnalysisPanel(ctk.CTkFrame):
         self.progress_indicator.pack(fill="x", padx=20, pady=10)
 
     def _select_file(self):
-        """Open file browser dialog."""
+        """Open file browser dialog for single or multiple files."""
         filetypes = [
-            ("Document Files", "*.pdf *.csv *.xlsx *.xls"),
+            ("All Supported Files", "*.pdf *.docx *.pptx *.csv *.xlsx *.xls *.json *.md *.markdown *.txt"),
+            ("Document Files", "*.pdf *.docx *.pptx"),
+            ("Spreadsheet Files", "*.csv *.xlsx *.xls"),
+            ("Code & Data Files", "*.json *.txt"),
+            ("Markdown Files", "*.md *.markdown"),
             ("PDF Files", "*.pdf"),
+            ("Word Files", "*.docx"),
+            ("PowerPoint Files", "*.pptx"),
             ("CSV Files", "*.csv"),
             ("Excel Files", "*.xlsx *.xls"),
+            ("JSON Files", "*.json"),
+            ("Text Files", "*.txt"),
             ("All Files", "*.*")
         ]
 
-        file_path = filedialog.askopenfilename(
-            title="Select file for analysis",
+        # Allow multiple file selection
+        file_paths = filedialog.askopenfilenames(
+            title="Select file(s) for analysis (Ctrl+Click for multiple)",
             filetypes=filetypes
         )
 
-        if file_path:
-            self.selected_file = file_path
-            # Handle both Windows and Unix paths
-            filename = file_path.replace("/", "\\").split("\\")[-1]
-            self.file_label.configure(text=filename, text_color=COLORS["text_primary"])
+        if file_paths:
+            self.selected_files = list(file_paths)
+            self.selected_file = file_paths[0] if file_paths else None
+
+            # Update label with file count
+            if len(file_paths) == 1:
+                filename = Path(file_paths[0]).name
+                label_text = filename
+            else:
+                label_text = f"{len(file_paths)} files selected"
+
+            self.file_label.configure(text=label_text, text_color=COLORS["text_primary"])
             self.analyze_button.configure(state="normal")
-            self.on_status(f"Selected: {filename}")
+            self.on_status(f"Selected: {label_text}")
 
     def _on_analysis_type_changed(self):
         """Handle analysis type selection change."""
@@ -229,12 +246,17 @@ class AnalysisPanel(ctk.CTkFrame):
         self.on_status(f"Analysis type: {self.analysis_type}")
 
     def _on_analyze_clicked(self):
-        """Handle analyze button click."""
-        if not self.selected_file:
+        """Handle analyze button click - supports single or batch analysis."""
+        if not self.selected_files:
             self.on_status("Please select a file first")
             return
 
-        self.on_analysis(self.selected_file, self.analysis_type)
+        # Pass selected files to callback - it will determine batch vs single
+        if len(self.selected_files) == 1:
+            self.on_analysis(self.selected_files[0], self.analysis_type)
+        else:
+            # Batch analysis - pass list of files
+            self.on_analysis(self.selected_files, self.analysis_type)
 
     def disable_upload_button(self):
         """Disable upload during analysis."""

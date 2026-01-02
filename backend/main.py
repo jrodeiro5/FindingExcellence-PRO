@@ -5,13 +5,19 @@ from pathlib import Path
 from typing import List, Optional
 
 from ai.ai_services import AISearchService
+from ai.batch_analyzer import BatchAnalyzer
 from ai.data_analyzer import get_data_summary
 from core.content_search import ContentSearch
 from core.csv_handler import CSVHandler
 from core.excel_handler import ExcelHandler
 from core.file_search import FileSearch
+from core.json_handler import JSONHandler
+from core.markdown_handler import MarkdownHandler
 from core.pdf_processor import PDFProcessor
+from core.powerpoint_handler import PowerPointHandler
+from core.search_history import SearchHistory
 from core.text_handler import TextHandler
+from core.word_handler import WordHandler
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +42,7 @@ app.add_middleware(
 
 file_search = FileSearch()
 content_search = ContentSearch()
+search_history = SearchHistory()
 
 # Initialize Ollama-based AI service (100% local, no external API calls)
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -134,6 +141,57 @@ async def search_content(request: ContentSearchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/search/history")
+async def add_to_search_history(request: FileSearchRequest):
+    """Add a search to the history after it's completed."""
+    try:
+        search_history.add_search(
+            keywords=request.keywords,
+            folders=request.folders,
+            exclude_keywords=request.exclude_keywords,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            case_sensitive=request.case_sensitive,
+            extensions=request.supported_extensions
+        )
+        return {"success": True, "message": "Search added to history"}
+    except Exception as e:
+        logger.error(f"Error adding to search history: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/search/history")
+async def get_search_history(limit: int = 20):
+    """Get recent search history."""
+    try:
+        history = search_history.get_history(limit=limit)
+        return {"success": True, "history": history}
+    except Exception as e:
+        logger.error(f"Error retrieving search history: {e}")
+        return {"success": False, "error": str(e), "history": []}
+
+@app.post("/api/search/history/{search_id}")
+async def rerun_search(search_id: int):
+    """Get a specific search from history for re-running."""
+    try:
+        search = search_history.get_search_by_id(search_id)
+        if search:
+            return {"success": True, "search": search}
+        else:
+            return {"success": False, "error": "Search not found"}
+    except Exception as e:
+        logger.error(f"Error retrieving search: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/search/history/{search_id}")
+async def delete_search_history(search_id: int):
+    """Delete a search from history."""
+    try:
+        success = search_history.delete_search(search_id)
+        return {"success": success, "message": "Search deleted" if success else "Failed to delete"}
+    except Exception as e:
+        logger.error(f"Error deleting search: {e}")
+        return {"success": False, "error": str(e)}
+
 @app.post("/api/analyze")
 async def analyze_file(file: UploadFile = File(...), analysis_type: str = "summary"):
     """
@@ -183,9 +241,33 @@ async def analyze_file(file: UploadFile = File(...), analysis_type: str = "summa
                 if error:
                     logger.error(f"Text extraction error: {error}")
                     raise HTTPException(status_code=400, detail=f"Text error: {error}")
+            elif file_ext == '.docx':
+                logger.debug(f"Extracting text from Word: {file.filename}")
+                extracted_text, error = WordHandler.read_word(str(temp_path))
+                if error:
+                    logger.error(f"Word extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"Word error: {error}")
+            elif file_ext == '.pptx':
+                logger.debug(f"Extracting text from PowerPoint: {file.filename}")
+                extracted_text, error = PowerPointHandler.read_powerpoint(str(temp_path))
+                if error:
+                    logger.error(f"PowerPoint extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"PowerPoint error: {error}")
+            elif file_ext == '.json':
+                logger.debug(f"Extracting text from JSON: {file.filename}")
+                extracted_text, error = JSONHandler.read_json(str(temp_path))
+                if error:
+                    logger.error(f"JSON extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"JSON error: {error}")
+            elif file_ext in ['.md', '.markdown', '.mdown', '.mkd', '.mkdn']:
+                logger.debug(f"Extracting text from Markdown: {file.filename}")
+                extracted_text, error = MarkdownHandler.read_markdown(str(temp_path))
+                if error:
+                    logger.error(f"Markdown extraction error: {error}")
+                    raise HTTPException(status_code=400, detail=f"Markdown error: {error}")
             else:
                 logger.warning(f"Unsupported file type: {file_ext}")
-                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_ext}")
+                raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_ext}. Supported: PDF, XLSX, CSV, TXT, DOCX, PPTX, JSON, MD")
 
             if not extracted_text:
                 logger.warning(f"No text extracted from: {file.filename}")
@@ -247,6 +329,139 @@ Provide:
     except Exception as e:
         logger.error(f"File analysis failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@app.post("/api/analyze/batch")
+async def analyze_batch(files: List[UploadFile] = File(...), analysis_type: str = "summary"):
+    """
+    Analyze multiple documents in batch and provide consolidated insights.
+    Supports 2-100 files per batch.
+    """
+    if not ai_service:
+        raise HTTPException(status_code=503, detail="AI service not available")
+
+    if not files or len(files) < 2:
+        raise HTTPException(status_code=400, detail="Batch analysis requires at least 2 files")
+
+    if len(files) > 100:
+        raise HTTPException(status_code=400, detail="Maximum 100 files per batch")
+
+    try:
+        batch_analyses = []
+        successful_files = 0
+        failed_files = 0
+        temp_paths = []
+
+        logger.info(f"Starting batch analysis for {len(files)} files with type: {analysis_type}")
+
+        for idx, file in enumerate(files, 1):
+            try:
+                # Save uploaded file temporarily
+                temp_path = Path(f"temp_uploads/{file.filename}")
+                temp_path.parent.mkdir(parents=True, exist_ok=True)
+                temp_paths.append(temp_path)
+
+                contents = await file.read()
+                with open(temp_path, 'wb') as f:
+                    f.write(contents)
+
+                logger.debug(f"[{idx}/{len(files)}] Processing file: {file.filename}")
+
+                # Extract text based on file type
+                extracted_text = ""
+                file_ext = Path(file.filename).suffix.lower()
+
+                # Use same extraction logic as single file endpoint
+                if file_ext == '.pdf':
+                    extracted_text, error = PDFProcessor.extract_text(str(temp_path))
+                    if error:
+                        raise Exception(f"PDF error: {error}")
+                elif file_ext in ['.xlsx', '.xls', '.xlsm']:
+                    extracted_text, error = ExcelHandler.read_excel(str(temp_path))
+                    if error:
+                        raise Exception(f"Excel error: {error}")
+                elif file_ext == '.csv':
+                    extracted_text, error = CSVHandler.read_csv(str(temp_path))
+                    if error:
+                        raise Exception(f"CSV error: {error}")
+                elif file_ext in ['.txt']:
+                    extracted_text, error = TextHandler.read_text(str(temp_path))
+                    if error:
+                        raise Exception(f"Text error: {error}")
+                elif file_ext == '.docx':
+                    extracted_text, error = WordHandler.read_word(str(temp_path))
+                    if error:
+                        raise Exception(f"Word error: {error}")
+                elif file_ext == '.pptx':
+                    extracted_text, error = PowerPointHandler.read_powerpoint(str(temp_path))
+                    if error:
+                        raise Exception(f"PowerPoint error: {error}")
+                elif file_ext == '.json':
+                    extracted_text, error = JSONHandler.read_json(str(temp_path))
+                    if error:
+                        raise Exception(f"JSON error: {error}")
+                elif file_ext in ['.md', '.markdown', '.mdown', '.mkd', '.mkdn']:
+                    extracted_text, error = MarkdownHandler.read_markdown(str(temp_path))
+                    if error:
+                        raise Exception(f"Markdown error: {error}")
+                else:
+                    raise Exception(f"Unsupported file type: {file_ext}")
+
+                if not extracted_text:
+                    raise Exception(f"Could not extract text from {file.filename}")
+
+                # Perform analysis
+                logger.debug(f"Analyzing {file.filename} with type: {analysis_type}")
+                result = ai_service.analyze_document(extracted_text, analysis_type)
+
+                batch_analyses.append({
+                    "filename": file.filename,
+                    "file_type": file_ext,
+                    "extracted_chars": len(extracted_text),
+                    "analysis": result
+                })
+
+                successful_files += 1
+                logger.debug(f"[{idx}/{len(files)}] Analysis complete: {file.filename}")
+
+            except Exception as e:
+                failed_files += 1
+                logger.warning(f"[{idx}/{len(files)}] Failed to analyze {file.filename}: {str(e)}")
+                batch_analyses.append({
+                    "filename": file.filename,
+                    "error": str(e),
+                    "analysis": None
+                })
+
+        # Generate consolidated summary
+        summary = BatchAnalyzer.prepare_batch_summary(batch_analyses, analysis_type)
+
+        logger.info(f"Batch analysis complete: {successful_files}/{len(files)} successful")
+
+        return {
+            "success": True,
+            "file_count": len(files),
+            "successful": successful_files,
+            "failed": failed_files,
+            "analysis_type": analysis_type,
+            "individual_analyses": batch_analyses,
+            "summary": summary
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Batch analysis failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Batch analysis failed: {str(e)}")
+
+    finally:
+        # Clean up temp files
+        for temp_path in temp_paths:
+            try:
+                if temp_path.exists():
+                    temp_path.unlink()
+                    logger.debug(f"Cleaned up temp file: {temp_path}")
+            except Exception as e:
+                logger.warning(f"Could not clean up {temp_path}: {e}")
 
 @app.post("/api/ocr")
 async def ocr_image(request: OCRRequest):

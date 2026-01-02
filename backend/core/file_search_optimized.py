@@ -146,7 +146,8 @@ class OptimizedFileSearch:
                            exclude_keywords: Optional[List[str]] = None,
                            case_sensitive: bool = False,
                            supported_extensions: Optional[Tuple] = None,
-                           status_callback: Optional[Callable] = None) -> List[Dict]:
+                           status_callback: Optional[Callable] = None,
+                           result_callback: Optional[Callable] = None) -> List[Dict]:
         """
         Search for files with optimizations and caching.
 
@@ -159,6 +160,7 @@ class OptimizedFileSearch:
             case_sensitive: Case-sensitive search
             supported_extensions: Tuple of extensions to include
             status_callback: Function for status updates
+            result_callback: Optional callback called for each result found (for progressive display)
 
         Returns:
             List of matching files with metadata
@@ -204,7 +206,14 @@ class OptimizedFileSearch:
                         start_date=start_date,
                         end_date=end_date
                     )
-                    found_files.extend(cached_results)
+
+                    # Call result_callback for each cached result (for progressive display)
+                    for result_dict in cached_results:
+                        found_files.append(result_dict)
+                        if result_callback:
+                            result_callback(result_dict)
+                        if len(found_files) % 5 == 0 and status_callback:
+                            status_callback(f"Found {len(found_files)} files...")
 
                 else:
                     # Full scan
@@ -220,14 +229,19 @@ class OptimizedFileSearch:
 
                     # Convert to dict format and add status
                     for filename, filepath, formatted_time in results:
-                        found_files.append({
+                        result_dict = {
                             "filename": filename,
                             "path": filepath,
                             "modified": formatted_time,
                             "type": Path(filepath).suffix.lstrip('.').lower() or "unknown"
-                        })
+                        }
+                        found_files.append(result_dict)
 
-                        if len(found_files) % 10 == 0 and status_callback:
+                        # Call result callback for progressive display
+                        if result_callback:
+                            result_callback(result_dict)
+
+                        if len(found_files) % 5 == 0 and status_callback:
                             status_callback(f"Found {len(found_files)} files...")
 
                     # Update cache

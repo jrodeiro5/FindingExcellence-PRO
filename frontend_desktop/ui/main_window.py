@@ -34,9 +34,10 @@ except ImportError:
     from branding import COLORS, FONTS, THEME
 
 from .analysis_panel import AnalysisPanel
-from .interactive_results import InteractiveResultsPanel
+from .analysis_results_panel import AnalysisResultsPanel
 from .results_panel import ResultsPanel
 from .search_panel import SearchPanel
+from .treeview_results import TreeviewResultsPanel
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,14 @@ class ExcelFinderApp(ctk.CTk):
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
+        # Set window icon (use relative path that works from multiple execution contexts)
+        icon_path = Path(__file__).parent.parent.parent / "assets" / "icons" / "ayesa_logo.ico"
+        if icon_path.exists():
+            try:
+                self.iconbitmap(str(icon_path))
+            except Exception as e:
+                logger.warning(f"Could not load icon: {e}")
+
         # Backend client (for AI features only)
         self.api_client = BackendClient(host="http://localhost:8000")
 
@@ -64,6 +73,10 @@ class ExcelFinderApp(ctk.CTk):
         # State for AI analysis
         self.analysis_thread: Optional[threading.Thread] = None
         self.analysis_start_time: float = 0
+
+        # State for progressive result display
+        self.current_search_results: list = []
+        self.search_is_cached: bool = False
 
         # Build UI
         self._build_ui()
@@ -77,33 +90,56 @@ class ExcelFinderApp(ctk.CTk):
     def _build_ui(self):
         """Build main UI layout."""
         # Header with Ayesa branding
-        header = ctk.CTkFrame(self, fg_color=COLORS["primary"], height=50)
+        header = ctk.CTkFrame(self, fg_color=COLORS["primary"], height=70)
         header.pack(side="top", fill="x", padx=0, pady=0)
         header.pack_propagate(False)
 
-        title = ctk.CTkLabel(
-            header,
-            text="FindingExcellence PRO",
-            font=FONTS["title"],
-            text_color=COLORS["background"]
-        )
-        title.pack(side="left", padx=20, pady=10)
+        # Left side: Ayesa logo/header image
+        header_left = ctk.CTkFrame(header, fg_color="transparent")
+        header_left.pack(side="left", padx=10, pady=10)
 
-        subtitle = ctk.CTkLabel(
-            header,
-            text="Powered by Ayesa",
-            font=FONTS["small"],
-            text_color=COLORS["accent"]
-        )
-        subtitle.pack(side="left", padx=5, pady=10)
+        # Try to load and display the Ayesa header image
+        header_image_path = Path(__file__).parent.parent.parent / "assets" / "headers" / "ayesa_header_small_240x60.png"
+        if header_image_path.exists():
+            try:
+                from PIL import Image, ImageTk
+                # Load and display header image
+                img = Image.open(str(header_image_path))
+                photo = ImageTk.PhotoImage(img)
+                header_img_label = ctk.CTkLabel(header_left, image=photo, text="")
+                header_img_label.image = photo  # Keep a reference to prevent garbage collection
+                header_img_label.pack(side="left", padx=0, pady=0)
+            except Exception as e:
+                logger.warning(f"Could not load header image: {e}")
+                # Fallback: Use text branding
+                title = ctk.CTkLabel(
+                    header_left,
+                    text="FindingExcellence PRO",
+                    font=FONTS["title"],
+                    text_color=COLORS["background"]
+                )
+                title.pack(side="left", padx=10, pady=0)
+        else:
+            # Fallback: Use text branding if image not found
+            title = ctk.CTkLabel(
+                header_left,
+                text="FindingExcellence PRO",
+                font=FONTS["title"],
+                text_color=COLORS["background"]
+            )
+            title.pack(side="left", padx=10, pady=0)
+
+        # Right side: Status indicator
+        header_right = ctk.CTkFrame(header, fg_color="transparent")
+        header_right.pack(side="right", padx=10, pady=10)
 
         self.status_label = ctk.CTkLabel(
-            header,
+            header_right,
             text="Ready",
             font=FONTS["body"],
             text_color=COLORS["background"]
         )
-        self.status_label.pack(side="right", padx=20, pady=10)
+        self.status_label.pack(side="right", padx=10, pady=0)
 
         # Main content area with light background
         content_frame = ctk.CTkFrame(self, fg_color=COLORS["background"])
@@ -131,7 +167,7 @@ class ExcelFinderApp(ctk.CTk):
         self.search_panel.pack(fill="x", padx=0, pady=0)
 
         # Independent results panel for File Search tab
-        self.search_results_panel = InteractiveResultsPanel(
+        self.search_results_panel = TreeviewResultsPanel(
             search_container,
             on_status_callback=self._update_status
         )
@@ -149,8 +185,8 @@ class ExcelFinderApp(ctk.CTk):
         )
         self.analysis_panel.pack(fill="x", padx=0, pady=0)
 
-        # Independent results panel for AI Analysis tab
-        self.analysis_results_panel = InteractiveResultsPanel(
+        # Independent results panel for AI Analysis tab (text-only, not table)
+        self.analysis_results_panel = AnalysisResultsPanel(
             analysis_container,
             on_status_callback=self._update_status
         )
@@ -221,7 +257,7 @@ class ExcelFinderApp(ctk.CTk):
                     start_date: str = None, end_date: str = None,
                     exclude_keywords: list = None, file_extensions: list = None,
                     min_size: int = None, max_size: int = None):
-        """Background search worker with status callbacks."""
+        """Background search worker with status callbacks and progressive result display."""
         try:
             # Split keywords by space or comma
             keywords = [k.strip() for k in keyword.replace(',', ' ').split() if k.strip()]
@@ -241,6 +277,22 @@ class ExcelFinderApp(ctk.CTk):
 
             # Check if using cache (file_search.index is available)
             is_cached = hasattr(self.file_search, 'index') and self.file_search.index is not None
+            self.search_is_cached = is_cached
+
+            # Reset current results for this search
+            self.current_search_results = []
+            last_display_count = 0
+
+            # Custom status callback that also updates results display
+            def status_callback_with_display(message: str):
+                nonlocal last_display_count
+                self._on_search_status(message)
+                # Display results so far every 50 files found
+                current_count = len(self.current_search_results)
+                if current_count > 0 and current_count - last_display_count >= 50:
+                    last_display_count = current_count
+                    self.after(0, lambda r=list(self.current_search_results), c=is_cached:
+                              self._display_results_incrementally(r, c))
 
             results = self.file_search.search_by_filename(
                 folder_paths=folders,
@@ -250,7 +302,8 @@ class ExcelFinderApp(ctk.CTk):
                 end_date=parsed_end,
                 exclude_keywords=exclude_keywords,
                 supported_extensions=tuple(file_extensions) if file_extensions else None,
-                status_callback=self._on_search_status
+                status_callback=status_callback_with_display,
+                result_callback=self._on_search_result  # New: callback for each result
             )
 
             # Filter results by file size if specified
@@ -258,7 +311,7 @@ class ExcelFinderApp(ctk.CTk):
                 filtered_results = []
                 for result in results:
                     try:
-                        file_path = result[1]  # Path is second element
+                        file_path = result.get("path", "")  # Path is in dict
                         file_size = os.path.getsize(file_path)
 
                         if min_size and file_size < min_size:
@@ -267,11 +320,14 @@ class ExcelFinderApp(ctk.CTk):
                             continue
 
                         filtered_results.append(result)
-                    except (OSError, IndexError):
+                    except (OSError, KeyError, TypeError):
                         # Skip files that can't be accessed or don't have path
                         continue
 
                 results = filtered_results
+
+            # Store final results
+            self.current_search_results = results
 
             # Update UI on main thread with cache status
             self.after(0, lambda r=results, c=is_cached: self._on_search_complete(r, c))
@@ -284,6 +340,17 @@ class ExcelFinderApp(ctk.CTk):
         """Called by FileSearch with progress updates."""
         # Schedule UI update on main thread
         self.after(0, lambda: self._update_status(message, color="#FFB347"))
+
+    def _on_search_result(self, result: dict):
+        """Called when each file is found (for future use with result streaming)."""
+        # Add result to current results list
+        self.current_search_results.append(result)
+
+    def _display_results_incrementally(self, results: list, is_cached: bool = False):
+        """Display results progressively as they arrive during search."""
+        # Only update if we have new results
+        if results:
+            self.search_results_panel.display_results(results, is_cached=is_cached)
 
     def _on_cancel_search(self):
         """Cancel ongoing search."""
@@ -321,9 +388,12 @@ class ExcelFinderApp(ctk.CTk):
 
     # ==================== AI ANALYSIS (Uses Backend API - Synchronous) ====================
 
-    def _on_analysis_start(self, file_path: str, analysis_type: str = "summary"):
-        """Called when user clicks Analyze button."""
-        if not file_path:
+    def _on_analysis_start(self, file_path_or_list, analysis_type: str = "summary"):
+        """Called when user clicks Analyze button. Handles single file or batch analysis."""
+        # Determine if single file or batch
+        is_batch = isinstance(file_path_or_list, list)
+
+        if not file_path_or_list:
             self._update_status("No file selected", color="#FF6B6B")
             return
 
@@ -334,10 +404,14 @@ class ExcelFinderApp(ctk.CTk):
 
         # Disable UI and show progress
         self.analysis_panel.disable_upload_button()
-        self._update_status(f"Analyzing file ({analysis_type})...", color="#FFB347")
 
-        # Show enhanced progress indicator with elapsed time
-        self.analysis_panel.show_progress(f"Analyzing ({analysis_type})")
+        if is_batch:
+            file_count = len(file_path_or_list)
+            self._update_status(f"Analyzing {file_count} files ({analysis_type})...", color="#FFB347")
+            self.analysis_panel.show_progress(f"Analyzing {file_count} files ({analysis_type})")
+        else:
+            self._update_status(f"Analyzing file ({analysis_type})...", color="#FFB347")
+            self.analysis_panel.show_progress(f"Analyzing ({analysis_type})")
 
         # Show indeterminate progress bar
         self.progress_bar.pack(fill="x", pady=(10, 0))
@@ -350,41 +424,63 @@ class ExcelFinderApp(ctk.CTk):
         # Start analysis in background thread
         self.analysis_thread = threading.Thread(
             target=self._run_analysis,
-            args=(file_path, analysis_type),
+            args=(file_path_or_list, analysis_type),
             daemon=True
         )
         self.analysis_thread.start()
 
-    def _run_analysis(self, file_path: str, analysis_type: str = "summary"):
-        """Background worker for file analysis. Only calls self.after() once at the end."""
+    def _run_analysis(self, file_path_or_list, analysis_type: str = "summary"):
+        """Background worker for file/batch analysis. Only calls self.after() once at the end."""
         try:
-            # Call the synchronous API - this blocks until complete
-            result = self.api_client.analyze_file(file_path, analysis_type)
+            # Determine if batch or single file
+            is_batch = isinstance(file_path_or_list, list)
+
+            if is_batch:
+                # Batch analysis
+                result = self.api_client.analyze_batch(file_path_or_list, analysis_type)
+            else:
+                # Single file analysis
+                result = self.api_client.analyze_file(file_path_or_list, analysis_type)
 
             if result.get("success"):
-                # Extract analysis result - may be nested dict from ai_services
-                analysis_data = result.get("analysis", {})
-                if isinstance(analysis_data, dict):
-                    # Backend returns nested structure: {"analysis": {"analysis": "text", "model": ...}}
-                    analysis_text = analysis_data.get("analysis", "No analysis returned")
-                    model = analysis_data.get("model", "unknown")
-                    latency_ms = analysis_data.get("latency_ms", 0)
+                if is_batch:
+                    # Format batch results
+                    summary = result.get("summary", "No summary available")
+                    file_count = result.get("file_count", 0)
+                    successful = result.get("successful", 0)
+                    failed = result.get("failed", 0)
+
+                    formatted_result = self._format_batch_result(
+                        summary,
+                        file_count,
+                        successful,
+                        failed,
+                        analysis_type
+                    )
                 else:
-                    # Direct string response
-                    analysis_text = str(analysis_data)
-                    model = result.get("model", "unknown")
-                    latency_ms = 0
+                    # Format single file results
+                    analysis_data = result.get("analysis", {})
+                    if isinstance(analysis_data, dict):
+                        # Backend returns nested structure: {"analysis": {"analysis": "text", "model": ...}}
+                        analysis_text = analysis_data.get("analysis", "No analysis returned")
+                        model = analysis_data.get("model", "unknown")
+                        latency_ms = analysis_data.get("latency_ms", 0)
+                    else:
+                        # Direct string response
+                        analysis_text = str(analysis_data)
+                        model = result.get("model", "unknown")
+                        latency_ms = 0
 
-                file_info = result.get("file_info", {})
-                timing = result.get("timing", {"total_ms": latency_ms})
+                    file_info = result.get("file_info", {})
+                    timing = result.get("timing", {"total_ms": latency_ms})
 
-                # Format result with metadata
-                formatted_result = self._format_analysis_result(
-                    analysis_text,
-                    file_info,
-                    timing,
-                    model
-                )
+                    # Format result with metadata
+                    formatted_result = self._format_analysis_result(
+                        analysis_text,
+                        file_info,
+                        timing,
+                        model
+                    )
 
                 # Schedule UI update on main thread - ONLY self.after() call
                 self.after(0, lambda r=formatted_result: self._on_analysis_complete(r))
@@ -398,6 +494,29 @@ class ExcelFinderApp(ctk.CTk):
             logger.error(f"Analysis error: {error_msg}")
             # Schedule UI update on main thread - ONLY self.after() call
             self.after(0, lambda msg=error_msg: self._on_analysis_error(msg))
+
+    def _format_batch_result(self, summary: str, file_count: int, successful: int, failed: int, analysis_type: str) -> str:
+        """Format batch analysis result with summary and statistics."""
+        header_lines = [
+            "=" * 60,
+            "BATCH ANALYSIS RESULTS",
+            "=" * 60,
+            f"Files analyzed: {successful}/{file_count} successful",
+        ]
+
+        if failed > 0:
+            header_lines.append(f"Failed: {failed} files")
+
+        header_lines.extend([
+            f"Analysis type: {analysis_type}",
+            "=" * 60,
+            ""
+        ])
+
+        # Add the consolidated summary
+        header_lines.append(summary)
+
+        return "\n".join(header_lines)
 
     def _format_analysis_result(self, analysis: str, file_info: dict, timing: dict, model: str) -> str:
         """Format analysis result with metadata header."""

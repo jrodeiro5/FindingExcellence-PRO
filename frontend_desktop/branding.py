@@ -1,8 +1,8 @@
 """Ayesa branding configuration for FindingExcellence PRO"""
 
-# Ayesa Brand Colors
+# Ayesa Brand Colors (extracted from official logo)
 COLORS = {
-    "primary": "#0000D0",          # Deep blue
+    "primary": "#0100CD",          # Official Ayesa blue (extracted from logo)
     "accent": "#FF3184",           # Vibrant pink
     "background": "#FFFFFF",       # White
     "text_primary": "#000000",     # Black
@@ -10,6 +10,9 @@ COLORS = {
     "surface": "#F2F2FD",          # Light blue/purple
     "border": "#E0E0E0",           # Light gray
     "text_secondary": "#3E4D4D",   # Muted dark
+    "success": "#52CC52",          # Green for success messages
+    "warning": "#FFB347",          # Orange for warnings
+    "error": "#FF6B6B",            # Red for errors
 }
 
 # Ayesa Brand Fonts

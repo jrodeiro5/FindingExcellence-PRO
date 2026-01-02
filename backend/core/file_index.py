@@ -88,6 +88,19 @@ class FileIndex:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
+            # First check if any files exist for this folder
+            cursor.execute("""
+                SELECT COUNT(*) FROM files
+                WHERE folder = ?
+            """, (folder_path,))
+
+            file_count = cursor.fetchone()[0]
+            if file_count == 0:
+                conn.close()
+                logger.debug(f"No cache found for {folder_path} (empty)")
+                return False
+
+            # Then check age of the cache
             cursor.execute("""
                 SELECT indexed_at FROM files
                 WHERE folder = ?
@@ -104,7 +117,7 @@ class FileIndex:
 
                 is_valid = age < self.cache_ttl
                 if is_valid:
-                    logger.debug(f"Cache valid for {folder_path} (age: {age}s)")
+                    logger.debug(f"Cache valid for {folder_path} (age: {age}s, {file_count} files)")
                 else:
                     logger.debug(f"Cache expired for {folder_path} (age: {age}s > {self.cache_ttl}s)")
                 return is_valid

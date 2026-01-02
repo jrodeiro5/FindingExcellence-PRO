@@ -154,6 +154,125 @@ class BackendClient:
             logger.error(f"Get progress failed: {e}")
             return {"status": "failed", "error": str(e)}
 
+    def get_search_history(self, limit: int = 20) -> Dict[str, Any]:
+        """
+        Get recent search history.
+
+        Args:
+            limit: Maximum number of searches to return
+
+        Returns:
+            {
+                "success": bool,
+                "history": [
+                    {
+                        "id": int,
+                        "keywords": [list],
+                        "folders": [list],
+                        "search_count": int,
+                        "created_at": str,
+                        ...
+                    },
+                    ...
+                ]
+            }
+        """
+        try:
+            response = self.session.get(
+                urljoin(self.host, f"/api/search/history?limit={limit}"),
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Get search history failed: {e}")
+            return {"success": False, "history": [], "error": str(e)}
+
+    def rerun_search(self, search_id: int) -> Dict[str, Any]:
+        """
+        Get a saved search by ID for re-running.
+
+        Args:
+            search_id: ID of the search to retrieve
+
+        Returns:
+            {
+                "success": bool,
+                "search": {
+                    "id": int,
+                    "keywords": [list],
+                    "folders": [list],
+                    "case_sensitive": bool,
+                    "extensions": [list],
+                    ...
+                }
+            }
+        """
+        try:
+            response = self.session.post(
+                urljoin(self.host, f"/api/search/history/{search_id}"),
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Rerun search failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    def delete_search_history(self, search_id: int) -> Dict[str, Any]:
+        """Delete a search from history."""
+        try:
+            response = self.session.delete(
+                urljoin(self.host, f"/api/search/history/{search_id}"),
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Delete search history failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    def add_to_search_history(self, keywords: List[str], folders: List[str],
+                              exclude_keywords: Optional[List[str]] = None,
+                              start_date: Optional[str] = None,
+                              end_date: Optional[str] = None,
+                              case_sensitive: bool = False,
+                              extensions: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Add current search to history after search completes."""
+        try:
+            from pydantic import BaseModel
+
+            class SearchHistoryRequest(BaseModel):
+                keywords: List[str]
+                folders: List[str]
+                exclude_keywords: Optional[List[str]] = None
+                start_date: Optional[str] = None
+                end_date: Optional[str] = None
+                case_sensitive: bool = False
+                supported_extensions: Optional[List[str]] = None
+
+            # Create request object (using dict to avoid needing Pydantic here)
+            data = {
+                "keywords": keywords,
+                "folders": folders,
+                "exclude_keywords": exclude_keywords or [],
+                "start_date": start_date,
+                "end_date": end_date,
+                "case_sensitive": case_sensitive,
+                "supported_extensions": extensions or []
+            }
+
+            response = self.session.post(
+                urljoin(self.host, "/api/search/history"),
+                json=data,
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Add to search history failed: {e}")
+            return {"success": False, "error": str(e)}
+
     def analyze_file(self, file_path: str, analysis_type: str = "summary") -> Dict[str, Any]:
         """
         Upload and analyze a file synchronously.
@@ -216,6 +335,90 @@ class BackendClient:
             return {"success": False, "error": "Cannot connect to backend. Is it running?"}
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    def analyze_batch(self, file_paths: list, analysis_type: str = "summary") -> Dict[str, Any]:
+        """
+        Upload and analyze multiple files in batch.
+
+        The backend processes files and returns individual analyses plus consolidated summary.
+
+        Args:
+            file_paths: List of file paths to analyze (2-100 files)
+            analysis_type: Type of analysis (summary, key_points, anomalies, insights, trends, comparative)
+
+        Returns:
+            {
+                "success": bool,
+                "file_count": int,
+                "successful": int,
+                "failed": int,
+                "analysis_type": str,
+                "individual_analyses": [{...}, ...],
+                "summary": str,
+                "error": str (if failed)
+            }
+        """
+        if not file_paths or len(file_paths) < 2:
+            return {"success": False, "error": "Batch analysis requires at least 2 files"}
+
+        if len(file_paths) > 100:
+            return {"success": False, "error": "Maximum 100 files per batch"}
+
+        try:
+            files_to_upload = []
+
+            # Prepare all files
+            for file_path in file_paths:
+                if not Path(file_path).exists():
+                    logger.warning(f"File not found: {file_path}")
+                    continue
+
+                mime_type = get_mime_type(file_path)
+                filename = Path(file_path).name
+
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    files_to_upload.append(
+                        ('files', (filename, file_content, mime_type))
+                    )
+
+            if not files_to_upload:
+                return {"success": False, "error": "No valid files to analyze"}
+
+            # Send batch request
+            data = {'analysis_type': analysis_type}
+
+            response = self.session.post(
+                urljoin(self.host, "/api/analyze/batch"),
+                files=files_to_upload,
+                data=data,
+                timeout=self.timeout * 2  # Double timeout for batch processing
+            )
+
+            # Check for errors
+            if response.status_code != 200:
+                error_msg = self._parse_error_response(response)
+                return {"success": False, "error": error_msg}
+
+            # Parse response
+            try:
+                result = response.json()
+            except ValueError:
+                logger.error("Invalid JSON response from server")
+                return {"success": False, "error": "Invalid response from server"}
+
+            result["success"] = True
+            return result
+
+        except requests.exceptions.Timeout:
+            logger.error("Batch analysis timed out")
+            return {"success": False, "error": "Batch analysis timed out. Try fewer files or smaller files."}
+        except requests.exceptions.ConnectionError:
+            logger.error("Cannot connect to backend")
+            return {"success": False, "error": "Cannot connect to backend. Is it running?"}
+        except Exception as e:
+            logger.error(f"Batch analysis failed: {e}")
             return {"success": False, "error": str(e)}
 
     # Legacy method for backwards compatibility
