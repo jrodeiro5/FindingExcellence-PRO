@@ -31,10 +31,10 @@ dependencies = [
     "PyMuPDF>=1.24.0",
 
     # Image Processing (for Ollama vision models)
-    "Pillow>=10.2.0",
+    "Pillow>=10.3.0",
 
     # AI Integration - 100% Local (Ollama)
-    "requests>=2.31.0",
+    "requests>=2.32.4",
     "python-dotenv>=1.0.0",
 
     # System Monitoring
