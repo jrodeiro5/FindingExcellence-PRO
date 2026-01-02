@@ -44,6 +44,12 @@ temp_uploads/
 *.tmp
 nul
 
+# Cache & Database files
+.cache/
+*.db
+*.sqlite
+*.sqlite3
+
 # OS
 Thumbs.db
 .DS_Store
@@ -51,15 +57,20 @@ Thumbs.db
 # uv
 .uv/
 
-# Documentation (local/personal)
+# Documentation (local/personal - keep README.md, CONTRIBUTING.md, SECURITY.md, CLAUDE.md public)
 docs/
-CLAUDE.md
 README_MIGRATION.md
 MIGRATION_SUMMARY.md
 NEXT_STEPS.md
 CHECKLIST.md
 CHANGELOG.md
-*.md
+# Note: README.md, CONTRIBUTING.md, SECURITY.md, CLAUDE.md are PUBLIC
+# Other .md files in root are private
+!README.md
+!CONTRIBUTING.md
+!SECURITY.md
+!CLAUDE.md
+!LICENSE
 
 # Batch/Setup scripts (local dev only, except main startup scripts)
 activate.bat

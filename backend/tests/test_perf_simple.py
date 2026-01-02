@@ -14,7 +14,7 @@ from backend.core.file_search_optimized import OptimizedFileSearch
 
 def test_desktop_performance():
     """Quick test on Desktop folder."""
-    desktop = "C:\\Users\\jrodeiro\\Desktop"
+    desktop = "C:\\Users\\TestUser\\Desktop"
 
     if not os.path.isdir(desktop):
         print(f"Desktop folder not found: {desktop}")

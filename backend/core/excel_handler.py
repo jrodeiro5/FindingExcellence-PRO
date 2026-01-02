@@ -31,55 +31,58 @@ class ExcelHandler:
 
             # Read all sheets
             xls = pd.ExcelFile(file_path)
-            sheet_names = xls.sheet_names
+            try:
+                sheet_names = xls.sheet_names
 
-            if not sheet_names:
-                return "", "Excel file has no sheets"
+                if not sheet_names:
+                    return "", "Excel file has no sheets"
 
-            lines = []
-            lines.append(f"# Excel File Summary")
-            lines.append(f"- Number of sheets: {len(sheet_names)}")
-            lines.append(f"- Sheet names: {', '.join(sheet_names)}")
-            lines.append("")
+                lines = []
+                lines.append(f"# Excel File Summary")
+                lines.append(f"- Number of sheets: {len(sheet_names)}")
+                lines.append(f"- Sheet names: {', '.join(sheet_names)}")
+                lines.append("")
 
-            # Process each sheet
-            for sheet_name in sheet_names:
-                try:
-                    df = pd.read_excel(file_path, sheet_name=sheet_name)
+                # Process each sheet
+                for sheet_name in sheet_names:
+                    try:
+                        df = pd.read_excel(file_path, sheet_name=sheet_name)
 
-                    if df.empty:
+                        if df.empty:
+                            lines.append(f"## Sheet: {sheet_name}")
+                            lines.append("(Empty sheet)")
+                            lines.append("")
+                            continue
+
+                        # Sheet header
                         lines.append(f"## Sheet: {sheet_name}")
-                        lines.append("(Empty sheet)")
+                        lines.append(f"- Rows: {df.shape[0]}")
+                        lines.append(f"- Columns: {df.shape[1]}")
+                        lines.append(f"- Columns: {', '.join(df.columns.tolist())}")
                         lines.append("")
-                        continue
 
-                    # Sheet header
-                    lines.append(f"## Sheet: {sheet_name}")
-                    lines.append(f"- Rows: {df.shape[0]}")
-                    lines.append(f"- Columns: {df.shape[1]}")
-                    lines.append(f"- Columns: {', '.join(df.columns.tolist())}")
-                    lines.append("")
+                        # Preview as table
+                        lines.append("### Data Preview")
+                        preview_rows = min(ExcelHandler.MAX_PREVIEW_ROWS, len(df))
+                        preview_df = df.head(preview_rows)
+                        lines.append(preview_df.to_markdown(index=False))
 
-                    # Preview as table
-                    lines.append("### Data Preview")
-                    preview_rows = min(ExcelHandler.MAX_PREVIEW_ROWS, len(df))
-                    preview_df = df.head(preview_rows)
-                    lines.append(preview_df.to_markdown(index=False))
+                        if len(df) > preview_rows:
+                            lines.append(f"\n... and {len(df) - preview_rows} more rows")
 
-                    if len(df) > preview_rows:
-                        lines.append(f"\n... and {len(df) - preview_rows} more rows")
+                        lines.append("")
 
-                    lines.append("")
+                    except Exception as e:
+                        logger.warning(f"Error reading sheet '{sheet_name}': {e}")
+                        lines.append(f"## Sheet: {sheet_name}")
+                        lines.append(f"(Error reading sheet: {str(e)})")
+                        lines.append("")
 
-                except Exception as e:
-                    logger.warning(f"Error reading sheet '{sheet_name}': {e}")
-                    lines.append(f"## Sheet: {sheet_name}")
-                    lines.append(f"(Error reading sheet: {str(e)})")
-                    lines.append("")
-
-            text_output = "\n".join(lines)
-            logger.info(f"Successfully read Excel file with {len(sheet_names)} sheets")
-            return text_output, None
+                text_output = "\n".join(lines)
+                logger.info(f"Successfully read Excel file with {len(sheet_names)} sheets")
+                return text_output, None
+            finally:
+                xls.close()  # Explicitly close the ExcelFile handle
 
         except FileNotFoundError:
             return "", f"File not found: {file_path}"
@@ -105,35 +108,38 @@ class ExcelHandler:
         """
         try:
             xls = pd.ExcelFile(file_path)
-            sheet_names = xls.sheet_names
+            try:
+                sheet_names = xls.sheet_names
 
-            if not sheet_names:
+                if not sheet_names:
+                    return {
+                        "sheet_names": [],
+                        "active_sheet": None,
+                        "rows": 0,
+                        "columns": 0,
+                        "column_names": [],
+                        "preview_data": [],
+                        "error": "No sheets in Excel file"
+                    }
+
+                # Read first sheet
+                active_sheet = sheet_names[0]
+                df = pd.read_excel(file_path, sheet_name=active_sheet)
+
+                preview_df = df.iloc[:max_rows, :max_cols]
+                preview_data = preview_df.values.tolist()
+
                 return {
-                    "sheet_names": [],
-                    "active_sheet": None,
-                    "rows": 0,
-                    "columns": 0,
-                    "column_names": [],
-                    "preview_data": [],
-                    "error": "No sheets in Excel file"
+                    "sheet_names": sheet_names,
+                    "active_sheet": active_sheet,
+                    "rows": df.shape[0],
+                    "columns": df.shape[1],
+                    "column_names": df.columns.tolist(),
+                    "preview_data": preview_data,
+                    "error": None
                 }
-
-            # Read first sheet
-            active_sheet = sheet_names[0]
-            df = pd.read_excel(file_path, sheet_name=active_sheet)
-
-            preview_df = df.iloc[:max_rows, :max_cols]
-            preview_data = preview_df.values.tolist()
-
-            return {
-                "sheet_names": sheet_names,
-                "active_sheet": active_sheet,
-                "rows": df.shape[0],
-                "columns": df.shape[1],
-                "column_names": df.columns.tolist(),
-                "preview_data": preview_data,
-                "error": None
-            }
+            finally:
+                xls.close()  # Explicitly close the ExcelFile handle
         except Exception as e:
             logger.error(f"Error getting Excel preview: {e}")
             return {

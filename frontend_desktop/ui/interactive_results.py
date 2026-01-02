@@ -27,9 +27,11 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         super().__init__(parent, fg_color=COLORS["background"])
         self.on_status = on_status_callback or (lambda x: None)
         self.results: List[Dict[str, Any]] = []
+        self.filtered_results: List[Dict[str, Any]] = []  # Results after quick filter
         self.selected_row: Optional[int] = None
         self.sort_column: str = "filename"  # Default sort column
         self.sort_ascending: bool = True   # Sort direction
+        self.quick_filter_text: str = ""  # Current quick filter text
 
         self._build_ui()
 
@@ -63,6 +65,43 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             text_color=COLORS["text_secondary"]
         )
         self.cache_label.pack(side="right")
+
+        # Quick filter frame
+        filter_frame = ctk.CTkFrame(self, fg_color="transparent")
+        filter_frame.pack(fill="x", padx=15, pady=(0, 10))
+
+        ctk.CTkLabel(
+            filter_frame,
+            text="Quick Filter:",
+            font=("Arial", 9),
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 5))
+
+        self.quick_filter_entry = ctk.CTkEntry(
+            filter_frame,
+            placeholder_text="Search results by filename or path...",
+            height=28,
+            font=("Arial", 9),
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["border"],
+            border_width=1
+        )
+        self.quick_filter_entry.pack(side="left", fill="x", expand=True)
+        self.quick_filter_entry.bind("<KeyRelease>", self._on_quick_filter_change)
+
+        # Clear filter button
+        ctk.CTkButton(
+            filter_frame,
+            text="✕ Clear",
+            width=60,
+            height=28,
+            font=("Arial", 9),
+            fg_color=COLORS["accent"],
+            text_color=COLORS["background"],
+            hover_color="#E01670",
+            command=self._clear_quick_filter
+        ).pack(side="left", padx=(5, 0))
 
         # Results container (Treeview-like table using Frame + Listbox)
         table_frame = ctk.CTkFrame(self, fg_color=COLORS["surface"], border_width=1, border_color=COLORS["border"])
@@ -168,6 +207,80 @@ class InteractiveResultsPanel(ctk.CTkFrame):
         elif event.num == 4 or event.delta > 0:
             self.canvas.yview_scroll(-1, "units")
 
+    def _on_quick_filter_change(self, event=None):
+        """Handle quick filter text entry changes."""
+        self.quick_filter_text = self.quick_filter_entry.get().strip().lower()
+
+        # Filter results based on quick filter text
+        if self.quick_filter_text:
+            self.filtered_results = [
+                r for r in self.results
+                if self.quick_filter_text in r.get("filename", "").lower()
+                   or self.quick_filter_text in r.get("path", "").lower()
+            ]
+        else:
+            self.filtered_results = self.results
+
+        # Re-display with filtered results
+        if self.results:
+            self._refresh_display()
+
+    def _clear_quick_filter(self):
+        """Clear the quick filter."""
+        self.quick_filter_entry.delete(0, "end")
+        self.quick_filter_text = ""
+        self.filtered_results = self.results
+
+        if self.results:
+            self._refresh_display()
+
+        self.on_status("Filter cleared")
+
+    def _refresh_display(self):
+        """Refresh the results display with current filtered results."""
+        # Sort filtered results based on current sort column
+        sorted_results = sorted(
+            self.filtered_results,
+            key=lambda x: x.get(self.sort_column, "").lower() if isinstance(x.get(self.sort_column), str) else x.get(self.sort_column, 0),
+            reverse=not self.sort_ascending
+        )
+
+        # Clear previous results
+        for widget in self.inner_frame.winfo_children():
+            widget.destroy()
+
+        if not sorted_results:
+            empty_label = ctk.CTkLabel(
+                self.inner_frame,
+                text="No files match filter.",
+                font=("Arial", 11),
+                text_color=COLORS["text_secondary"]
+            )
+            empty_label.pack(padx=10, pady=20)
+            self.count_label.configure(text=f"{len(self.filtered_results)}/{len(self.results)} files")
+            return
+
+        # Add result rows
+        for i, file_info in enumerate(sorted_results):
+            self._create_result_row(i, file_info)
+
+        # Update counts
+        if self.quick_filter_text:
+            self.count_label.configure(text=f"{len(self.filtered_results)}/{len(self.results)} files")
+        else:
+            self.count_label.configure(text=f"{len(self.results)} files")
+
+        # Update cache label
+        if hasattr(self, '_is_cached'):
+            if self._is_cached:
+                self.cache_label.configure(text="📦 Cached results")
+            else:
+                self.cache_label.configure(text="🔍 Live search")
+
+        # Update canvas scroll region
+        self.inner_frame.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
     def _sort_results(self, column: str):
         """Sort results by clicking column header."""
         # Toggle sort direction if same column
@@ -185,9 +298,9 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             else:
                 header.configure(text=col.capitalize(), text_color="#999999")
 
-        # Re-display with new sort
+        # Re-display with new sort (preserves current quick filter)
         if self.results:
-            self.display_results(self.results, is_cached=hasattr(self, '_is_cached') and self._is_cached)
+            self._refresh_display()
 
     def display_results(self, results: List[Dict[str, Any]], is_cached: bool = False):
         """
@@ -198,7 +311,12 @@ class InteractiveResultsPanel(ctk.CTkFrame):
             is_cached: Whether these results came from cache
         """
         self.results = results
+        self.filtered_results = results  # Initialize filtered_results with all results
         self._is_cached = is_cached
+
+        # Clear quick filter when new results are displayed
+        self.quick_filter_entry.delete(0, "end")
+        self.quick_filter_text = ""
 
         # Sort results based on current sort column
         sorted_results = sorted(

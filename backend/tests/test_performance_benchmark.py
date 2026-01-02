@@ -25,8 +25,8 @@ class PerformanceBenchmark:
     def __init__(self):
         self.results = []
         self.real_folders = [
-            "C:\\Users\\jrodeiro\\Desktop",
-            "C:\\Users\\jrodeiro\\Downloads",
+            "C:\\Users\\TestUser\\Desktop",
+            "C:\\Users\\TestUser\\Downloads",
         ]
 
     def count_files(self, folder: str) -> int:

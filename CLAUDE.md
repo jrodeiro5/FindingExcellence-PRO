@@ -397,13 +397,108 @@ def _on_my_work_complete(self, result):
 | Desktop search (854K files) | <30s | 20-24s | ✅ Meets target |
 | Cached search | <100ms | <10ms | ✅ Instant |
 
+## Debugging & Troubleshooting
+
+### Common Issues
+
+**Backend won't start**
+```cmd
+# Check Python version
+python --version          # Should be 3.12+
+
+# Verify dependencies
+pip list | findstr fastapi
+
+# Check port 8000 is not in use
+netstat -ano | findstr 8000
+
+# View backend logs
+type finding_excellence.log
+```
+
+**Frontend shows "Backend Offline"**
+- Ensure backend started first: `python backend\main.py`
+- Check backend is running on port 8000: http://localhost:8000/health
+- Verify `.env` has correct `BACKEND_PORT=8000`
+
+**Ollama connection issues**
+```cmd
+# Test Ollama service
+ollama list                    # Should show available models
+ollama serve                   # Start Ollama (if not running as service)
+
+# Check OLLAMA_HOST in .env
+cat .env | findstr OLLAMA_HOST
+```
+
+**UI doesn't appear or freezes**
+- Check `finding_excellence_desktop.log` for errors
+- Ensure CustomTkinter is installed: `pip list | findstr customtkinter`
+- Run frontend alone to test: `.venv\Scripts\python.exe frontend_desktop\main.py`
+
+**Test failures**
+```cmd
+# Run single test with verbose output
+pytest backend/tests/test_core.py::TestSearch::test_search -v
+
+# Check pytest configuration
+cat backend/pytest.ini
+```
+
+### Debugging Tips
+
+1. **Check logs first**: Both backend and desktop write to `.log` files in project root
+2. **Use health endpoint**: `http://localhost:8000/health` shows service status (AI, file search, etc.)
+3. **Frontend works without backend**: File search runs locally via `core/file_search.py`, no HTTP needed
+4. **Test with small files first**: Use `test_ga4_data.csv` for quick testing before large searches
+
+## Frontend-Only Development
+
+To work on the desktop UI without the backend:
+
+```cmd
+# Terminal 1: Just run the frontend
+.venv\Scripts\activate.bat
+python frontend_desktop\main.py
+
+# The frontend will gracefully handle backend being offline
+# File search will still work (local, no API needed)
+```
+
+**Important**: The file search component (`frontend_desktop/core/file_search.py`) runs entirely locally and doesn't require the backend server.
+
+## Threading & UI Safety
+
+The desktop UI uses CustomTkinter with careful thread management:
+
+```python
+# ✅ CORRECT - Update UI from background thread
+def _run_search(self):
+    """Runs in background thread"""
+    results = do_search()
+    # Use self.after() to safely update UI from main thread
+    self.after(0, lambda: self._update_results(results))
+
+def _update_results(self, results):
+    """Runs on main thread - safe to update widgets"""
+    self.result_label.configure(text=results)
+
+# ❌ WRONG - Never directly update UI from background thread
+def _run_search(self):
+    self.result_label.configure(text="Running...")  # WILL CRASH!
+```
+
+Key rule: **All widget updates must happen on the main thread**. Use `self.after(0, callback)` to schedule updates.
+
 ## Important Notes
 
-- **Windows CMD only** - .bat scripts don't work in PowerShell/Git Bash
-- **Backend must run first** - Frontend checks health on startup
-- **Port 8000** - Backend runs on 8000 (not 8001)
-- **Python 3.12 minimum** - Required for all dependencies
-- **All local** - No external API keys or cloud services needed
-- **Models**: phi4-mini is primary (faster), qwen3:4b-instruct is fallback
-- **Model warmup**: First request to backend triggers model warmup (~30s), subsequent requests are fast
-- **File search**: Optimized with os.scandir + SQLite caching (see Performance section above)
+- **Windows CMD only** - .bat scripts don't work in PowerShell/Git Bash (use `cmd.exe`)
+- **Backend on port 8000** - FastAPI runs on 8000, not 8001 (verify with `.env`)
+- **Backend must run first** - Frontend checks health on startup and degrades gracefully if offline
+- **Python 3.12 minimum** - Required for all dependencies (check `pyproject.toml`)
+- **All local processing** - No external API keys or cloud services needed
+- **Models**: phi4-mini is primary (fast CPU inference), qwen3:4b-instruct is fallback
+- **Model warmup**: First request to backend triggers warmup (~30s), subsequent requests are fast
+- **File search**: Optimized with `os.scandir()` + SQLite caching (see Performance section)
+- **Branding**: See `frontend_desktop/branding.py` for theme colors and styling
+- **Configuration**: Copy `.env.example` to `.env` and customize before first run

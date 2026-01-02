@@ -171,6 +171,137 @@ class SearchPanel(ctk.CTkFrame):
         )
         self.clear_dates_button.pack(side="left", padx=(2, 0))
 
+        # Exclude keywords frame
+        exclude_frame = ctk.CTkFrame(self, fg_color="transparent")
+        exclude_frame.pack(fill="x", padx=15, pady=5)
+
+        ctk.CTkLabel(
+            exclude_frame,
+            text="Exclude:",
+            font=FONTS["body"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 10))
+
+        self.exclude_entry = ctk.CTkEntry(
+            exclude_frame,
+            placeholder_text="e.g., temp, backup, old...",
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        self.exclude_entry.pack(side="left", fill="x", expand=True)
+
+        # File type frame
+        filetype_frame = ctk.CTkFrame(self, fg_color="transparent")
+        filetype_frame.pack(fill="x", padx=15, pady=5)
+
+        ctk.CTkLabel(
+            filetype_frame,
+            text="File Types:",
+            font=FONTS["body"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 10))
+
+        self.file_type_var = ctk.StringVar(value="All")
+        self.file_type_dropdown = ctk.CTkComboBox(
+            filetype_frame,
+            variable=self.file_type_var,
+            values=["All", "Documents (.docx, .pdf, .txt)", "Spreadsheets (.xlsx, .xls, .csv)", "Images (.png, .jpg, .jpeg, .gif)", "Archives (.zip, .rar, .7z)", "Custom..."],
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        self.file_type_dropdown.pack(side="left", fill="x", expand=True)
+        self.file_type_dropdown.bind("<<ComboboxSelected>>", self._on_file_type_changed)
+
+        # Custom file types entry (initially hidden)
+        self.custom_file_types_entry = ctk.CTkEntry(
+            filetype_frame,
+            placeholder_text=".docx .xlsx .pdf",
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        # Don't pack yet - will show when "Custom..." is selected
+
+        # File size frame
+        filesize_frame = ctk.CTkFrame(self, fg_color="transparent")
+        filesize_frame.pack(fill="x", padx=15, pady=5)
+
+        ctk.CTkLabel(
+            filesize_frame,
+            text="Size:",
+            font=FONTS["body"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(0, 10))
+
+        # Min size
+        ctk.CTkLabel(
+            filesize_frame,
+            text="Min:",
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(5, 2))
+
+        self.min_size_entry = ctk.CTkEntry(
+            filesize_frame,
+            placeholder_text="0",
+            width=60,
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        self.min_size_entry.pack(side="left", padx=(0, 5))
+
+        # Max size
+        ctk.CTkLabel(
+            filesize_frame,
+            text="Max:",
+            font=FONTS["small"],
+            text_color=COLORS["text_primary"]
+        ).pack(side="left", padx=(5, 2))
+
+        self.max_size_entry = ctk.CTkEntry(
+            filesize_frame,
+            placeholder_text="999",
+            width=60,
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        self.max_size_entry.pack(side="left", padx=(0, 5))
+
+        # Size unit dropdown
+        self.size_unit_var = ctk.StringVar(value="MB")
+        self.size_unit_dropdown = ctk.CTkComboBox(
+            filesize_frame,
+            variable=self.size_unit_var,
+            values=["KB", "MB", "GB"],
+            width=50,
+            height=35,
+            font=FONTS["body"],
+            fg_color=COLORS["surface"],
+            text_color=COLORS["text_secondary"],
+            border_color=COLORS["primary"],
+            border_width=1
+        )
+        self.size_unit_dropdown.pack(side="left", padx=(0, 5))
+
         # Folder selection
         folder_label = ctk.CTkLabel(
             self,
@@ -289,6 +420,57 @@ class SearchPanel(ctk.CTkFrame):
         self.end_date_entry.delete(0, "end")
         self.on_status("Date filters cleared")
 
+    def _on_file_type_changed(self, event=None):
+        """Handle file type dropdown change."""
+        selected = self.file_type_var.get()
+        if selected == "Custom...":
+            # Show custom file types entry
+            self.custom_file_types_entry.pack(side="left", fill="x", expand=True, padx=(5, 0))
+        else:
+            # Hide custom file types entry
+            self.custom_file_types_entry.pack_forget()
+
+    def _get_file_type_extensions(self) -> list:
+        """Get file extensions based on selected file type."""
+        selected = self.file_type_var.get()
+
+        type_map = {
+            "All": [],
+            "Documents (.docx, .pdf, .txt)": [".docx", ".pdf", ".txt", ".doc"],
+            "Spreadsheets (.xlsx, .xls, .csv)": [".xlsx", ".xls", ".csv", ".xlsm"],
+            "Images (.png, .jpg, .jpeg, .gif)": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff"],
+            "Archives (.zip, .rar, .7z)": [".zip", ".rar", ".7z", ".tar", ".gz"],
+        }
+
+        if selected in type_map:
+            return type_map[selected]
+        elif selected == "Custom...":
+            # Parse custom extensions
+            custom_text = self.custom_file_types_entry.get().strip()
+            if custom_text:
+                # Split by space or comma
+                extensions = re.split(r'[,\s]+', custom_text)
+                # Ensure they start with dot
+                return ["." + ext.lstrip(".") if ext else "" for ext in extensions if ext]
+            return []
+        return []
+
+    def _parse_file_size(self, size_str: str, unit: str) -> Optional[int]:
+        """Parse file size string and convert to bytes."""
+        if not size_str.strip():
+            return None
+
+        try:
+            size_num = float(size_str.strip())
+            unit_multiplier = {
+                "KB": 1024,
+                "MB": 1024 * 1024,
+                "GB": 1024 * 1024 * 1024
+            }
+            return int(size_num * unit_multiplier.get(unit, 1024 * 1024))
+        except ValueError:
+            return None
+
     def _validate_date(self, date_str: str) -> bool:
         """
         Validate date string format (YYYY-MM-DD).
@@ -338,13 +520,33 @@ class SearchPanel(ctk.CTkFrame):
             self.on_status("Invalid end date format (use YYYY-MM-DD)")
             return
 
-        # Pass all parameters including dates
+        # Get exclude keywords
+        exclude_keywords = self.exclude_entry.get().strip()
+        exclude_list = [kw.strip() for kw in exclude_keywords.split(",") if kw.strip()] if exclude_keywords else []
+
+        # Get file type extensions
+        file_extensions = self._get_file_type_extensions()
+
+        # Get file size filters
+        min_size = self._parse_file_size(self.min_size_entry.get(), self.size_unit_var.get())
+        max_size = self._parse_file_size(self.max_size_entry.get(), self.size_unit_var.get())
+
+        # Validate size filters
+        if min_size and max_size and min_size > max_size:
+            self.on_status("Min size cannot be greater than max size")
+            return
+
+        # Pass all parameters
         self.on_search(
             keyword,
             self.search_folders,
             self.case_sensitive_var.get(),
             start_date if start_date else None,
-            end_date if end_date else None
+            end_date if end_date else None,
+            exclude_list,
+            file_extensions,
+            min_size,
+            max_size
         )
 
     def _on_cancel_clicked(self):

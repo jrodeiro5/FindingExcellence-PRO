@@ -1,10 +1,22 @@
 """File analysis panel component for AI document analysis."""
 
+import sys
 import time
 import tkinter.filedialog as filedialog
+from pathlib import Path
 from typing import Callable, Optional
 
 import customtkinter as ctk
+
+# Handle branding imports with fallback
+try:
+    from ..branding import COLORS, FONTS
+except ImportError:
+    # Fallback: add parent directory to path
+    parent_dir = str(Path(__file__).parent.parent)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    from branding import COLORS, FONTS
 
 
 class EnhancedProgressIndicator(ctk.CTkFrame):
@@ -21,12 +33,12 @@ class EnhancedProgressIndicator(ctk.CTkFrame):
         self.status_message = ""
         self.is_running = False
 
-        # Create label
+        # Create label with Ayesa branding
         self.status_label = ctk.CTkLabel(
             self,
             text="",
-            font=("Arial", 11),
-            text_color="#FFB347"
+            font=FONTS["body"],
+            text_color=COLORS["primary"]
         )
         self.status_label.pack(padx=20, pady=5)
 
@@ -42,7 +54,7 @@ class EnhancedProgressIndicator(ctk.CTkFrame):
         if self.is_running:
             elapsed = time.time() - self.start_time
             text = f"{self.status_message}... ({elapsed:.1f}s)"
-            self.status_label.configure(text=text, text_color="#FFB347")
+            self.status_label.configure(text=text, text_color=COLORS["primary"])
             # Schedule next update in 100ms
             self.after(100, self._schedule_update)
 
@@ -56,7 +68,7 @@ class EnhancedProgressIndicator(ctk.CTkFrame):
         self.is_running = False
 
         if final_message:
-            self.status_label.configure(text=final_message, text_color="#52CC52")
+            self.status_label.configure(text=final_message, text_color=COLORS["accent"])
         else:
             self.status_label.configure(text="")
 
@@ -76,34 +88,32 @@ class AnalysisPanel(ctk.CTkFrame):
         self.on_analysis = on_analysis_callback
         self.on_status = on_status_callback
         self.selected_file: Optional[str] = None
+        self.analysis_type: str = "summary"  # Default analysis type
 
         self._build_ui()
 
     def _build_ui(self):
-        """Build analysis panel layout."""
+        """Build analysis panel layout with Ayesa branding."""
         # Title
         title = ctk.CTkLabel(
             self,
             text="AI Document Analysis",
-            font=("Arial", 14, "bold")
+            font=FONTS["heading"],
+            text_color=COLORS["primary"]
         )
         title.pack(padx=20, pady=(20, 10), anchor="w")
-
-        # Enhanced progress indicator
-        self.progress_indicator = EnhancedProgressIndicator(self)
-        self.progress_indicator.pack(fill="x")
 
         # Instructions
         instructions = ctk.CTkLabel(
             self,
             text="Upload PDF, CSV, or Excel files for intelligent analysis",
-            font=("Arial", 10),
-            text_color="#888888"
+            font=FONTS["body"],
+            text_color=COLORS["text_secondary"]
         )
         instructions.pack(padx=20, pady=(0, 15), anchor="w")
 
         # File selection frame
-        file_frame = ctk.CTkFrame(self, fg_color="#2a2a2a")
+        file_frame = ctk.CTkFrame(self, fg_color=COLORS["surface"], border_width=1, border_color=COLORS["border"])
         file_frame.pack(fill="x", padx=20, pady=10)
 
         file_button_frame = ctk.CTkFrame(file_frame, fg_color="transparent")
@@ -113,7 +123,10 @@ class AnalysisPanel(ctk.CTkFrame):
             file_button_frame,
             text="Select File",
             height=40,
-            font=("Arial", 11, "bold"),
+            font=FONTS["heading"],
+            fg_color=COLORS["primary"],
+            text_color=COLORS["background"],
+            hover_color="#0000A8",
             command=self._select_file
         )
         self.upload_button.pack(side="left", padx=(0, 10))
@@ -121,8 +134,8 @@ class AnalysisPanel(ctk.CTkFrame):
         self.file_label = ctk.CTkLabel(
             file_button_frame,
             text="No file selected",
-            font=("Arial", 10),
-            text_color="#888888"
+            font=FONTS["body"],
+            text_color=COLORS["text_secondary"]
         )
         self.file_label.pack(side="left", fill="x", expand=True)
 
@@ -130,38 +143,62 @@ class AnalysisPanel(ctk.CTkFrame):
         file_types_label = ctk.CTkLabel(
             file_frame,
             text="Supported: PDF, CSV (.csv), Excel (.xlsx, .xls)",
-            font=("Arial", 9),
-            text_color="#666666"
+            font=FONTS["small"],
+            text_color=COLORS["text_secondary"]
         )
         file_types_label.pack(padx=10, pady=(0, 10), anchor="w")
+
+        # Analysis type selector
+        type_label = ctk.CTkLabel(
+            self,
+            text="Analysis Type:",
+            font=FONTS["heading"],
+            text_color=COLORS["primary"]
+        )
+        type_label.pack(padx=20, pady=(15, 10), anchor="w")
+
+        type_frame = ctk.CTkFrame(self, fg_color="transparent")
+        type_frame.pack(fill="x", padx=20, pady=(0, 15))
+
+        self.analysis_types = [
+            ("Summary", "summary", "Extract key information from the document"),
+            ("Key Points", "key_points", "List main points and findings"),
+            ("Anomalies", "anomalies", "Detect unusual or notable data points"),
+            ("Insights", "insights", "Extract actionable business insights"),
+            ("Trends", "trends", "Identify patterns and trends")
+        ]
+
+        self.type_var = ctk.StringVar(value="summary")
+
+        for label, value, tooltip in self.analysis_types:
+            radio = ctk.CTkRadioButton(
+                type_frame,
+                text=label,
+                variable=self.type_var,
+                value=value,
+                command=self._on_analysis_type_changed,
+                font=FONTS["body"],
+                text_color=COLORS["text_primary"]
+            )
+            radio.pack(side="left", padx=5)
 
         # Analysis button
         self.analyze_button = ctk.CTkButton(
             self,
             text="Analyze",
             height=40,
-            font=("Arial", 12, "bold"),
+            font=FONTS["heading"],
+            fg_color=COLORS["primary"],
+            text_color=COLORS["background"],
+            hover_color="#0000A8",
             command=self._on_analyze_clicked,
             state="disabled"
         )
         self.analyze_button.pack(fill="x", padx=20, pady=10)
 
-        # Results display
-        results_title = ctk.CTkLabel(
-            self,
-            text="Analysis Results:",
-            font=("Arial", 12, "bold")
-        )
-        results_title.pack(padx=20, pady=(15, 10), anchor="w")
-
-        self.results_text = ctk.CTkTextbox(
-            self,
-            height=300,
-            font=("Courier", 10),
-            wrap="word"
-        )
-        self.results_text.pack(fill="both", expand=True, padx=20, pady=(0, 20))
-        self.results_text.configure(state="disabled")
+        # Enhanced progress indicator (shown only during analysis)
+        self.progress_indicator = EnhancedProgressIndicator(self)
+        self.progress_indicator.pack(fill="x", padx=20, pady=10)
 
     def _select_file(self):
         """Open file browser dialog."""
@@ -182,9 +219,14 @@ class AnalysisPanel(ctk.CTkFrame):
             self.selected_file = file_path
             # Handle both Windows and Unix paths
             filename = file_path.replace("/", "\\").split("\\")[-1]
-            self.file_label.configure(text=filename, text_color="white")
+            self.file_label.configure(text=filename, text_color=COLORS["text_primary"])
             self.analyze_button.configure(state="normal")
             self.on_status(f"Selected: {filename}")
+
+    def _on_analysis_type_changed(self):
+        """Handle analysis type selection change."""
+        self.analysis_type = self.type_var.get()
+        self.on_status(f"Analysis type: {self.analysis_type}")
 
     def _on_analyze_clicked(self):
         """Handle analyze button click."""
@@ -192,7 +234,7 @@ class AnalysisPanel(ctk.CTkFrame):
             self.on_status("Please select a file first")
             return
 
-        self.on_analysis(self.selected_file)
+        self.on_analysis(self.selected_file, self.analysis_type)
 
     def disable_upload_button(self):
         """Disable upload during analysis."""
@@ -204,19 +246,6 @@ class AnalysisPanel(ctk.CTkFrame):
         self.upload_button.configure(state="normal")
         if self.selected_file:
             self.analyze_button.configure(state="normal")
-
-    def display_results(self, results: str):
-        """Display analysis results."""
-        self.results_text.configure(state="normal")
-        self.results_text.delete("1.0", "end")
-        self.results_text.insert("1.0", results)
-        self.results_text.configure(state="disabled")
-
-    def clear_results(self):
-        """Clear results display."""
-        self.results_text.configure(state="normal")
-        self.results_text.delete("1.0", "end")
-        self.results_text.configure(state="disabled")
 
     def show_progress(self, message: str = "Analyzing"):
         """Show progress indicator with elapsed time."""

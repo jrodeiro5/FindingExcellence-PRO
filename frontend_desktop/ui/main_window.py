@@ -1,6 +1,7 @@
 """Main application window with tabbed interface."""
 
 import logging
+import os
 import sys
 import threading
 import time
@@ -183,7 +184,9 @@ class ExcelFinderApp(ctk.CTk):
     # ==================== FILE SEARCH (Direct Python - No API) ====================
 
     def _on_search_start(self, keyword: str, folders: list, case_sensitive: bool = False,
-                         start_date: str = None, end_date: str = None):
+                         start_date: str = None, end_date: str = None,
+                         exclude_keywords: list = None, file_extensions: list = None,
+                         min_size: int = None, max_size: int = None):
         """Start file search directly (no API needed)."""
         if not keyword.strip():
             self._update_status("Please enter search keywords", color="#FF6B6B")
@@ -208,17 +211,24 @@ class ExcelFinderApp(ctk.CTk):
         # Run search in background thread
         self.search_thread = threading.Thread(
             target=self._run_search,
-            args=(keyword, folders, case_sensitive, start_date, end_date),
+            args=(keyword, folders, case_sensitive, start_date, end_date, exclude_keywords,
+                  file_extensions, min_size, max_size),
             daemon=True
         )
         self.search_thread.start()
 
     def _run_search(self, keyword: str, folders: list, case_sensitive: bool,
-                    start_date: str = None, end_date: str = None):
+                    start_date: str = None, end_date: str = None,
+                    exclude_keywords: list = None, file_extensions: list = None,
+                    min_size: int = None, max_size: int = None):
         """Background search worker with status callbacks."""
         try:
             # Split keywords by space or comma
             keywords = [k.strip() for k in keyword.replace(',', ' ').split() if k.strip()]
+
+            # Handle exclude keywords
+            if exclude_keywords is None:
+                exclude_keywords = []
 
             # Convert date strings to date objects if provided
             parsed_start = None
@@ -238,9 +248,30 @@ class ExcelFinderApp(ctk.CTk):
                 case_sensitive=case_sensitive,
                 start_date=parsed_start,
                 end_date=parsed_end,
-                supported_extensions=None,
+                exclude_keywords=exclude_keywords,
+                supported_extensions=tuple(file_extensions) if file_extensions else None,
                 status_callback=self._on_search_status
             )
+
+            # Filter results by file size if specified
+            if min_size or max_size:
+                filtered_results = []
+                for result in results:
+                    try:
+                        file_path = result[1]  # Path is second element
+                        file_size = os.path.getsize(file_path)
+
+                        if min_size and file_size < min_size:
+                            continue
+                        if max_size and file_size > max_size:
+                            continue
+
+                        filtered_results.append(result)
+                    except (OSError, IndexError):
+                        # Skip files that can't be accessed or don't have path
+                        continue
+
+                results = filtered_results
 
             # Update UI on main thread with cache status
             self.after(0, lambda r=results, c=is_cached: self._on_search_complete(r, c))
@@ -290,7 +321,7 @@ class ExcelFinderApp(ctk.CTk):
 
     # ==================== AI ANALYSIS (Uses Backend API - Synchronous) ====================
 
-    def _on_analysis_start(self, file_path: str):
+    def _on_analysis_start(self, file_path: str, analysis_type: str = "summary"):
         """Called when user clicks Analyze button."""
         if not file_path:
             self._update_status("No file selected", color="#FF6B6B")
@@ -303,11 +334,10 @@ class ExcelFinderApp(ctk.CTk):
 
         # Disable UI and show progress
         self.analysis_panel.disable_upload_button()
-        self.analysis_results_panel.clear_results()
-        self._update_status("Analyzing file...", color="#FFB347")
+        self._update_status(f"Analyzing file ({analysis_type})...", color="#FFB347")
 
         # Show enhanced progress indicator with elapsed time
-        self.analysis_panel.show_progress("Analyzing")
+        self.analysis_panel.show_progress(f"Analyzing ({analysis_type})")
 
         # Show indeterminate progress bar
         self.progress_bar.pack(fill="x", pady=(10, 0))
@@ -320,16 +350,16 @@ class ExcelFinderApp(ctk.CTk):
         # Start analysis in background thread
         self.analysis_thread = threading.Thread(
             target=self._run_analysis,
-            args=(file_path,),
+            args=(file_path, analysis_type),
             daemon=True
         )
         self.analysis_thread.start()
 
-    def _run_analysis(self, file_path: str):
+    def _run_analysis(self, file_path: str, analysis_type: str = "summary"):
         """Background worker for file analysis. Only calls self.after() once at the end."""
         try:
             # Call the synchronous API - this blocks until complete
-            result = self.api_client.analyze_file(file_path)
+            result = self.api_client.analyze_file(file_path, analysis_type)
 
             if result.get("success"):
                 # Extract analysis result - may be nested dict from ai_services

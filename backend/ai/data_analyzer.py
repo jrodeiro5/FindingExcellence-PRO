@@ -222,46 +222,49 @@ class DataAnalyzer:
     def _analyze_excel_with_pandas(file_path: str) -> Tuple[str, Dict[str, Any]]:
         """Analyze Excel file using Pandas."""
         try:
-            # Read all sheets
+            # Read all sheets (use context manager to ensure file is closed)
             excel_file = pd.ExcelFile(file_path)
-            sheet_names = excel_file.sheet_names
+            try:
+                sheet_names = excel_file.sheet_names
 
-            all_lines = [
-                f"## Excel Workbook Overview",
-                f"- Sheets: {len(sheet_names)}",
-                f"- Sheet names: {', '.join(sheet_names)}",
-                "",
-            ]
+                all_lines = [
+                    f"## Excel Workbook Overview",
+                    f"- Sheets: {len(sheet_names)}",
+                    f"- Sheet names: {', '.join(sheet_names)}",
+                    "",
+                ]
 
-            metadata = {
-                "sheets": len(sheet_names),
-                "sheet_names": sheet_names,
-            }
+                metadata = {
+                    "sheets": len(sheet_names),
+                    "sheet_names": sheet_names,
+                }
 
-            # Analyze first sheet (or all if few sheets)
-            sheets_to_analyze = sheet_names[:3]  # Max 3 sheets
+                # Analyze first sheet (or all if few sheets)
+                sheets_to_analyze = sheet_names[:3]  # Max 3 sheets
 
-            for sheet in sheets_to_analyze:
-                df = pd.read_excel(file_path, sheet_name=sheet, nrows=5000)
+                for sheet in sheets_to_analyze:
+                    df = pd.read_excel(file_path, sheet_name=sheet, nrows=5000)
 
-                all_lines.append(f"### Sheet: {sheet}")
-                all_lines.append(f"- Rows: {len(df):,}, Columns: {len(df.columns)}")
-                all_lines.append(f"- Columns: {', '.join(df.columns[:10])}")
+                    all_lines.append(f"### Sheet: {sheet}")
+                    all_lines.append(f"- Rows: {len(df):,}, Columns: {len(df.columns)}")
+                    all_lines.append(f"- Columns: {', '.join(df.columns[:10])}")
 
-                # Quick stats for numeric columns
-                numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns[:5]
-                if len(numeric_cols) > 0:
-                    all_lines.append("- Key metrics:")
-                    for col in numeric_cols:
-                        try:
-                            all_lines.append(f"  - {col}: sum={df[col].sum():.0f}, mean={df[col].mean():.2f}")
-                        except:
-                            pass
+                    # Quick stats for numeric columns
+                    numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns[:5]
+                    if len(numeric_cols) > 0:
+                        all_lines.append("- Key metrics:")
+                        for col in numeric_cols:
+                            try:
+                                all_lines.append(f"  - {col}: sum={df[col].sum():.0f}, mean={df[col].mean():.2f}")
+                            except:
+                                pass
 
-                all_lines.append("")
+                    all_lines.append("")
 
-            summary = "\n".join(all_lines)
-            return summary, metadata
+                summary = "\n".join(all_lines)
+                return summary, metadata
+            finally:
+                excel_file.close()  # Explicitly close the Excel file handle
 
         except Exception as e:
             logger.error(f"Excel analysis failed: {e}")
