@@ -1,12 +1,22 @@
 # FindingExcellence PRO v2.0
 
+<div align="center">
+
 **Privacy-first intelligent file search with local AI** – 100% local, zero external APIs.
 
 Modern desktop application combining fast file search with local AI analytics powered by Ollama.
 
-![Status](https://img.shields.io/badge/status-stable-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+Built by **[Ayesa](https://www.ayesa.com)** – Finding Excellence
+
+![Status](https://img.shields.io/badge/status-stable-brightgreen?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-0000D0?style=flat-square)
+![Python](https://img.shields.io/badge/python-3.12%2B-0000D0?style=flat-square)
+![Privacy](https://img.shields.io/badge/privacy-100%25%20local-FF3184?style=flat-square)
+![Ayesa](https://img.shields.io/badge/by-Ayesa-0000D0?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIGZpbGw9IiMwMDAwRDAiIHJ4PSIyIi8+PHRleHQgeD0iOCIgeT0iMTAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QTwvdGV4dD48L3N2Zz4=)
+
+</div>
+
+---
 
 ---
 
