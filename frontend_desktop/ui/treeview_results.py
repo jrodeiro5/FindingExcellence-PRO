@@ -25,9 +25,10 @@ except ImportError:
 class TreeviewResultsPanel(ctk.CTkFrame):
     """Professional results table using Tkinter Treeview with sorting and filtering."""
 
-    def __init__(self, parent, on_status_callback: Optional[Callable] = None):
+    def __init__(self, parent, on_status_callback: Optional[Callable] = None, result_type: str = "search"):
         super().__init__(parent, fg_color=COLORS["background"])
         self.on_status = on_status_callback or (lambda x: None)
+        self.result_type = result_type  # "search" or "organizer"
         self.results: List[Dict[str, Any]] = []
         self.filtered_results: List[Dict[str, Any]] = []
         self.sort_column: str = "filename"
@@ -126,26 +127,38 @@ class TreeviewResultsPanel(ctk.CTkFrame):
         # Configure Treeview style
         self._configure_treeview_style()
 
+        # Configure columns based on result type
+        if self.result_type == "organizer":
+            columns = ("filename", "cluster_id", "cluster_name", "top_terms")
+            column_config = {
+                "filename": {"text": "Filename", "width": 250, "anchor": "w"},
+                "cluster_id": {"text": "Cluster", "width": 80, "anchor": "center"},
+                "cluster_name": {"text": "Group Name", "width": 200, "anchor": "w"},
+                "top_terms": {"text": "Key Terms", "width": 250, "anchor": "w"}
+            }
+        else:  # Default: search results
+            columns = ("filename", "path", "modified", "type")
+            column_config = {
+                "filename": {"text": "Filename", "width": 200, "anchor": "w"},
+                "path": {"text": "Path", "width": 400, "anchor": "w"},
+                "modified": {"text": "Modified", "width": 120, "anchor": "center"},
+                "type": {"text": "Type", "width": 80, "anchor": "center"}
+            }
+
         # Create Treeview
         self.tree = ttk.Treeview(
             table_frame,
-            columns=("filename", "path", "modified", "type"),
+            columns=columns,
             height=20,
             show="headings",
             style="Treeview"
         )
 
-        # Define columns
-        self.tree.column("filename", width=200, anchor="w", minwidth=100)
-        self.tree.column("path", width=400, anchor="w", minwidth=150)
-        self.tree.column("modified", width=120, anchor="center", minwidth=100)
-        self.tree.column("type", width=80, anchor="center", minwidth=60)
-
-        # Define headings with click-to-sort
-        self.tree.heading("filename", text="Filename", command=lambda: self._sort_by_column("filename"))
-        self.tree.heading("path", text="Path", command=lambda: self._sort_by_column("path"))
-        self.tree.heading("modified", text="Modified", command=lambda: self._sort_by_column("modified"))
-        self.tree.heading("type", text="Type", command=lambda: self._sort_by_column("type"))
+        # Define columns and headings
+        for col in columns:
+            config = column_config[col]
+            self.tree.column(col, width=config["width"], anchor=config["anchor"], minwidth=80)
+            self.tree.heading(col, text=config["text"], command=lambda c=col: self._sort_by_column(c))
 
         # Add scrollbars
         vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
@@ -261,12 +274,21 @@ class TreeviewResultsPanel(ctk.CTkFrame):
 
         # Add sorted results to tree
         for i, file_info in enumerate(sorted_results):
-            values = (
-                file_info.get("filename", ""),
-                file_info.get("path", ""),
-                file_info.get("modified", "")[:10],  # Just date part
-                file_info.get("type", "")
-            )
+            # Format values based on result type
+            if self.result_type == "organizer":
+                values = (
+                    file_info.get("filename", ""),
+                    file_info.get("cluster_id", ""),
+                    file_info.get("cluster_name", ""),
+                    file_info.get("top_terms", "")
+                )
+            else:  # Default: search results
+                values = (
+                    file_info.get("filename", ""),
+                    file_info.get("path", ""),
+                    file_info.get("modified", "")[:10],  # Just date part
+                    file_info.get("type", "")
+                )
 
             # Alternate row colors for readability
             tag = "oddrow" if i % 2 == 0 else "evenrow"

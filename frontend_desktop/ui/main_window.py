@@ -36,6 +36,7 @@ except ImportError:
 
 from .analysis_panel import AnalysisPanel
 from .analysis_results_panel import AnalysisResultsPanel
+from .organizer_panel import OrganizerPanel
 from .results_panel import ResultsPanel
 from .search_panel import SearchPanel
 from .treeview_results import TreeviewResultsPanel
@@ -74,6 +75,9 @@ class ExcelFinderApp(ctk.CTk):
         # State for AI analysis
         self.analysis_thread: Optional[threading.Thread] = None
         self.analysis_start_time: float = 0
+
+        # State for file organization
+        self.organizer_thread: Optional[threading.Thread] = None
 
         # State for progressive result display
         self.current_search_results: list = []
@@ -190,6 +194,26 @@ class ExcelFinderApp(ctk.CTk):
             on_status_callback=self._update_status
         )
         self.analysis_results_panel.pack(fill="both", expand=True, pady=(10, 0))
+
+        # Tab 3: File Organizer (with independent results panel)
+        organizer_tab = self.tabview.add("File Organizer")
+        organizer_container = ctk.CTkFrame(organizer_tab, fg_color="transparent")
+        organizer_container.pack(fill="both", expand=True)
+
+        self.organizer_panel = OrganizerPanel(
+            organizer_container,
+            on_organize_callback=self._on_organize_start,
+            on_status_callback=self._update_status
+        )
+        self.organizer_panel.pack(fill="x", padx=0, pady=0)
+
+        # Reuse TreeviewResultsPanel for organizer results
+        self.organizer_results_panel = TreeviewResultsPanel(
+            organizer_container,
+            on_status_callback=self._update_status,
+            result_type="organizer"
+        )
+        self.organizer_results_panel.pack(fill="both", expand=True, pady=(10, 0))
 
         # Reference for backward compatibility
         self.results_panel = self.search_results_panel
@@ -576,6 +600,92 @@ class ExcelFinderApp(ctk.CTk):
         # Re-enable UI
         self.analysis_panel.enable_upload_button()
         self._update_status(f"Error: {error}", color="#FF6B6B")
+
+    # ==================== FILE ORGANIZER (Uses Backend Core) ====================
+
+    def _on_organize_start(self, folder: str, clusters: int, language: str):
+        """Start file organization in background thread."""
+        self.organizer_panel.disable_controls()
+        self._update_status("Organizing files...", color="#FFB347")
+        self.organizer_results_panel.clear_results() if hasattr(self.organizer_results_panel, 'clear_results') else None
+
+        # Show progress bar
+        self.progress_bar.pack(fill="x", pady=(10, 0))
+        self.progress_bar.configure(mode="indeterminate")
+        self.progress_bar.start()
+
+        # Start background thread
+        self.organizer_thread = threading.Thread(
+            target=self._run_organization,
+            args=(folder, clusters, language),
+            daemon=True
+        )
+        self.organizer_thread.start()
+
+    def _run_organization(self, folder: str, clusters: int, language: str):
+        """Background worker for file organization."""
+        try:
+            from backend.core.file_organizer import FileOrganizer
+
+            organizer = FileOrganizer(folder, clusters, language)
+
+            # Discover files
+            file_count = organizer.discover_files()
+            self.after(0, lambda: self._update_status(f"Found {file_count} files..."))
+
+            if file_count == 0:
+                self.after(0, lambda: self._on_organize_error("No supported files found"))
+                return
+
+            # Extract text
+            success_count = organizer.extract_all_texts()
+            self.after(0, lambda: self._update_status(f"Extracted {success_count} files, clustering..."))
+
+            if success_count == 0:
+                self.after(0, lambda: self._on_organize_error("Could not extract text from any files"))
+                return
+
+            # Cluster
+            if not organizer.cluster_files():
+                self.after(0, lambda: self._on_organize_error("Clustering failed"))
+                return
+
+            # Get results
+            results = organizer.get_results()
+
+            # Update UI on main thread
+            self.after(0, lambda r=results, c=success_count: self._on_organize_complete(r, c))
+
+        except Exception as e:
+            logger.error(f"Organization error: {e}", exc_info=True)
+            self.after(0, lambda: self._on_organize_error(str(e)))
+
+    def _on_organize_complete(self, results: list, file_count: int):
+        """Handle successful organization completion (UI thread)."""
+        # Stop progress bar
+        self.progress_bar.stop()
+        self.progress_bar.pack_forget()
+
+        # Re-enable controls
+        self.organizer_panel.enable_controls()
+
+        # Display results
+        self.organizer_results_panel.display_results(results, is_cached=False)
+
+        # Count clusters
+        cluster_count = len(set(r['cluster_id'] for r in results if r['cluster_id'] != -1))
+        self._update_status(f"✓ Organized {file_count} files into {cluster_count} clusters", color="#52CC52")
+
+    def _on_organize_error(self, error: str):
+        """Handle organization error (UI thread)."""
+        # Stop progress bar
+        self.progress_bar.stop()
+        self.progress_bar.pack_forget()
+
+        # Re-enable controls
+        self.organizer_panel.enable_controls()
+
+        self._update_status(f"Organization error: {error}", color="#E5383B")
 
     def _on_closing(self):
         """Handle window close."""

@@ -42,6 +42,9 @@ dependencies = [
 
     # Logging (structured, colorful, auto-rotating)
     "loguru>=0.7.2",
+
+    # ML & Clustering
+    "scikit-learn>=1.3.0",
 ]
 
 [project.optional-dependencies]
