@@ -1,0 +1,52 @@
+almanac/README.md
+  s_9f38bcb437d74e::t_4819e8947b6ce9 16-19,25-28,32
+  s_a2909cda34ba6a::t_3467b24fa481bd 2-14,21-24,30,33-35
+  s_9f38bcb437d74e::t_56f38c687c605d 1,15,20,29,31
+almanac/architecture/backend.md
+  s_9f38bcb437d74e::t_45878339e612bb 11,32
+  s_9f38bcb437d74e::t_8f5976d4eb3f9d 1-10,12-31,33-98
+almanac/architecture/frontend.md
+  s_9f38bcb437d74e::t_7e2b6a7868d06f 1-11,16-43,54-55,57-89,97-101
+  s_9f38bcb437d74e::t_86eb4e71a9bd0a 12-15,44-53,56,90-96
+almanac/decisions/local-first.md
+  s_9f38bcb437d74e::t_d68c8b95487b99 1-21,25,28-29,33-71
+  s_9f38bcb437d74e::t_1cf51d69987dd6 22-24,26-27,30-32
+almanac/guides/setup.md
+  s_9f38bcb437d74e::t_8959f3621d0192 1-21,23-26,29-34,38-57,60-62,64-93,96-99,101-116,119-158
+  s_9f38bcb437d74e::t_35466ff991793c 22,27-28,35-37,58-59,63,94-95,100,117-118
+almanac/architecture/search.md
+  s_9f38bcb437d74e::t_bce75be567e728 1-10,12-22,25-42,48-112
+  s_9f38bcb437d74e::t_1cde82ce022d9d 11,23-24
+  s_9f38bcb437d74e::t_3ebb28734befaf 43-47
+almanac/topics.yaml
+  s_a2909cda34ba6a::t_3467b24fa481bd 1-49
+almanac/architecture/ai-integration.md
+  s_9f38bcb437d74e::t_95e32db54320d1 1-114
+almanac/reference/api-endpoints.md
+  s_9f38bcb437d74e::t_fc78f55fdc8f87 15-19,193-194
+  s_9f38bcb437d74e::t_80f44d75a8e380 1-14,20-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "122408215b1893ce6cee6bf990509658f5ba9b6d",
+  "prompts": {},
+  "sessions": {
+    "s_9f38bcb437d74e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02447-64c7-7432-9603-44d60285e8b0",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    },
+    "s_a2909cda34ba6a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a004dd-a6f7-75e3-b67b-9817e1e8fca5",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
