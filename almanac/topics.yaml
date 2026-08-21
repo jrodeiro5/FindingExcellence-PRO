@@ -1,0 +1,49 @@
+---
+title: Topic Graph
+---
+
+topics:
+  - slug: concepts
+    title: Concepts
+    description: Core vocabulary and mental models for FindingExcellence PRO
+    parents: []
+
+  - slug: architecture
+    title: Architecture
+    description: System architecture and subsystem boundaries
+    parents: []
+
+  - slug: backend
+    title: Backend
+    description: FastAPI server, API endpoints, and request handling
+    parents: [architecture]
+
+  - slug: frontend
+    title: Frontend
+    description: Desktop UI with CustomTkinter
+    parents: [architecture]
+
+  - slug: ai-integration
+    title: AI Integration
+    description: Ollama-based local AI inference
+    parents: [architecture]
+
+  - slug: search
+    title: Search
+    description: File search, content search, and natural language search
+    parents: [architecture]
+
+  - slug: decisions
+    title: Decisions
+    description: Architectural and design decisions
+    parents: []
+
+  - slug: guides
+    title: Guides
+    description: Operational task guides
+    parents: []
+
+  - slug: reference
+    title: Reference
+    description: Exact contracts, commands, and configurations
+    parents: []
