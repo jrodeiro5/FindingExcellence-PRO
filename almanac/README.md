@@ -22,7 +22,7 @@ FindingExcellence PRO is a Python application (3.12+) that combines fast file se
 
 | Category | Purpose |
 |----------|---------|
-| [Architecture](architecture/backend) | System boundaries, flows, and constraints |
+| [Architecture](architecture) | System boundaries, flows, and constraints |
 | [Decisions](decisions/local-first) | Architectural choices and rationale |
 | [Guides](guides/setup) | Operational task instructions |
 | [Reference](reference/api-endpoints) | Exact contracts and configurations |
