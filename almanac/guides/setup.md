@@ -54,6 +54,11 @@ ollama pull phi4-mini         # Primary model (~2.5 GB, fast CPU)
 ollama pull deepseek-ocr      # Vision/OCR (~3 GB, 97% accuracy)
 ```
 
+The backend selects models from a hardcoded list in `OllamaClient.MODELS`
+rather than from `OLLAMA_MODEL`: phi4-mini is the primary general model,
+qwen3:4b-instruct is the fallback, and deepseek-ocr handles vision. Only
+phi4-mini and deepseek-ocr are warmed on startup, so those two must be pulled.
+
 Total model storage: ~5.5 GB. Ollama runs as a Windows background service
 automatically after installation. See CLAUDE.md ([@claudem]) for model
 selection rationale.
@@ -64,23 +69,31 @@ Copy `.env.example` ([@env-example]) to `.env` and customize:
 
 ```env
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=phi4-mini
+OLLAMA_MODEL=qwen3:4b
 OLLAMA_VISION_MODEL=deepseek-ocr
+OLLAMA_FAST_MODEL=deepseek-r1:1.5b
 OLLAMA_TEMPERATURE=0.3
-OLLAMA_MAX_TOKENS=500
-OLLAMA_CONTEXT_SIZE=1024
+OLLAMA_MAX_TOKENS=2000
+OLLAMA_CONTEXT_SIZE=2048
+OLLAMA_TIMEOUT=120
 OLLAMA_KEEP_ALIVE=-1
 
 DEFAULT_SEARCH_FOLDERS=C:\Users\YourName\Desktop,C:\Users\YourName\Downloads
 MAX_WORKERS=4
 BACKEND_PORT=8000
 LOG_LEVEL=INFO
+LOG_FILE=finding_excellence.log
 ```
 
 Key variables:
 
 - `OLLAMA_KEEP_ALIVE` — `-1` keeps model loaded forever, `0` unloads
-  immediately, `"5m"` keeps for 5 minutes. Default: `"5m"`.
+  immediately, `"5m"` keeps for 5 minutes.
+- `OLLAMA_CONTEXT_SIZE` — context window size sent to Ollama (code default
+  `512`; `.env.example` sets `2048`).
+- `OLLAMA_MAX_TOKENS` — max completion tokens (code default `256`;
+  `.env.example` sets `2000`).
+- `OLLAMA_TIMEOUT` — per-request timeout in seconds (`120`).
 - `BACKEND_PORT` — FastAPI listens here. Default: `8000`.
 - `DEFAULT_SEARCH_FOLDERS` — comma-separated list of default search
   directories.
