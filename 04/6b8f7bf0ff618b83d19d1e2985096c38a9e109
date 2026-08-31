@@ -1,0 +1,19 @@
+almanac/architecture/backend.md
+  s_1c005192b81c3e::t_3c3f68cb1c477f 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "046b8f7bf0ff618b83d19d1e2985096c38a9e109",
+  "prompts": {},
+  "sessions": {
+    "s_1c005192b81c3e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05739-e088-7361-8453-fe8096cef04e",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
