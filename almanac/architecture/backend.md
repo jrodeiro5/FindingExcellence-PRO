@@ -33,7 +33,7 @@ routes. At module import time it:
 
 The server runs via `uvicorn.run(app, host="127.0.0.1", port=8000)` when
 executed directly. The health endpoint at `/health` returns `{"status":
-"healthy"}` and is used by the desktop frontend to verify the backend is
+"healthy", "version": "2.0.0"}` and is used by the desktop frontend to verify the backend is
 reachable.
 
 ## Request Flow
