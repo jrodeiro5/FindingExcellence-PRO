@@ -8,6 +8,7 @@ sources:
   - {id: branding, type: file, path: frontend_desktop/branding.py}
   - {id: search-panel, type: file, path: frontend_desktop/ui/search_panel.py}
   - {id: analysis-panel, type: file, path: frontend_desktop/ui/analysis_panel.py}
+  - {id: export-manager, type: file, path: backend/utils/export.py}
   - {id: results-panel, type: file, path: frontend_desktop/ui/results_panel.py}
   - {id: treeview-results, type: file, path: frontend_desktop/ui/treeview_results.py}
   - {id: interactive-results, type: file, path: frontend_desktop/ui/interactive_results.py}
@@ -54,6 +55,17 @@ with a tabbed interface:
 
 The window is 900x700 pixels with an Ayesa branding header. The color scheme
 and fonts come from `branding.COLORS` and `branding.FONTS` ([@branding]).
+
+## Export Results
+
+Search results can be exported to CSV or Excel from the results UI. The
+treeview results panel ([@treeview-results]) exposes an export button and a
+format menu; CSV export is built in, while Excel export requires the `openpyxl`
+optional dependency and falls back to CSV when it is not installed. Export
+writes the filtered results when a quick filter is active, otherwise all
+results, to a timestamped file. The backend `ExportManager` ([@export-manager])
+provides `export_filename_results()` and `export_content_results()` helpers
+that the UI calls.
 
 ## Threading Model
 
