@@ -63,6 +63,10 @@ POST /api/search/filename
 }
 ```
 
+> The endpoint narrows `file_types` to Excel extensions at runtime and falls
+> back to `.xlsx` when no Excel extension is present, so PDF is not matched by
+> filename search ([@main-py]).
+
 Returns 500 on search failure.
 
 ## Natural Language Search

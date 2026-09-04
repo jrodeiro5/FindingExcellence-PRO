@@ -9,6 +9,7 @@ sources:
   - {id: search-progress, type: file, path: backend/core/search_progress.py}
   - {id: search-history, type: file, path: backend/core/search_history.py}
   - {id: ai-services, type: file, path: backend/ai/ai_services.py}
+  - {id: filename-fallback, type: file, path: backend/main.py}
 ---
 
 # Search Subsystem
@@ -106,7 +107,8 @@ supports CRUD operations: add, get, rerun, delete, and clear.
 
 ## Supported File Types
 
-Filename search defaults to Excel and PDF files:
-`.xlsx`, `.xls`, `.xlsm`, `.pdf`. Content search and AI analysis support:
+Filename search matches Excel extensions only (`.xlsx`, `.xls`, `.xlsm`) — the
+endpoint filters out other types ([@filename-fallback]). Content search and AI
+analysis support:
 `.pdf`, `.xlsx`, `.xls`, `.xlsm`, `.csv`, `.txt`, `.docx`, `.pptx`, `.json`,
 `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`.
