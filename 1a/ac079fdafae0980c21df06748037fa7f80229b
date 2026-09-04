@@ -1,0 +1,21 @@
+almanac/reference/api-endpoints.md
+  s_bde275b57f5eda::t_0a139747b9b1db 66-69
+almanac/architecture/search.md
+  s_bde275b57f5eda::t_0a139747b9b1db 12,110-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1aac079fdafae0980c21df06748037fa7f80229b",
+  "prompts": {},
+  "sessions": {
+    "s_bde275b57f5eda": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d3f-89ab-77b2-a41a-3e416e000a06",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
