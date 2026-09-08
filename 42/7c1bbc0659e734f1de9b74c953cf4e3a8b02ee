@@ -1,0 +1,23 @@
+almanac/architecture/backend.md
+  s_16ed090dc0ad87::t_3dc524c5bee126 47,49-51,57,59-63
+almanac/guides/setup.md
+  s_16ed090dc0ad87::t_3dc524c5bee126 23-24,65-67
+almanac/architecture/frontend.md
+  s_16ed090dc0ad87::t_c387ac221788b2 98-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "427c1bbc0659e734f1de9b74c953cf4e3a8b02ee",
+  "prompts": {},
+  "sessions": {
+    "s_16ed090dc0ad87": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a081f7-1649-7890-b177-43dcdb40c681",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
