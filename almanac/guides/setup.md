@@ -20,7 +20,8 @@ running both the backend and desktop frontend.
 - **Windows 10+** (use Windows CMD, not PowerShell — `.bat` scripts do not
   work in PowerShell/Git Bash).
 - **Python 3.12+** (required by `pyproject.toml` ([@pyproject])).
-- **Ollama** (for AI features): install from https://ollama.com.
+- **Ollama** (for AI features): install from https://ollama.com. The models this
+  app uses and how they are managed are covered in [AI Integration](../architecture/ai-integration).
 
 ## One-Time Setup
 
@@ -61,7 +62,9 @@ phi4-mini and deepseek-ocr are warmed on startup, so those two must be pulled.
 
 Total model storage: ~5.5 GB. Ollama runs as a Windows background service
 automatically after installation. See CLAUDE.md ([@claudem]) for model
-selection rationale.
+selection rationale. All processing stays on the user's machine, per the
+[Local-First Privacy](../decisions/local-first) decision: no data leaves the
+computer.
 
 ## Configuration
 

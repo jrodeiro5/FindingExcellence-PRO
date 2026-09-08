@@ -3,12 +3,8 @@ title: Backend Server
 topics: [architecture, backend]
 sources:
   - {id: main-py, type: file, path: backend/main.py}
-  - {id: file-search-optimized, type: file, path: backend/core/file_search_optimized.py}
-  - {id: file-index, type: file, path: backend/core/file_index.py}
-  - {id: search-history, type: file, path: backend/core/search_history.py}
   - {id: logging-setup, type: file, path: backend/utils/logging_setup.py}
   - {id: config-manager, type: file, path: backend/core/config_manager.py}
-  - {id: content-search, type: file, path: backend/core/content_search.py}
 ---
 
 # Backend Server
@@ -48,38 +44,23 @@ The backend exposes two categories of endpoints:
 
 - **Search endpoints** (`/api/search/*`) — filename search, content search,
   natural language search, and search history. These run entirely within the
-  backend process.
+  backend process; the algorithms are covered in [Search Subsystem](search).
 - **AI endpoints** (`/api/analyze`, `/api/analyze/batch`, `/api/ocr`) — require
-  a running Ollama instance. They return `503` when AI is unavailable.
+  a running Ollama instance. They return `503` when AI is unavailable; the
+  Ollama client, model warmup, and optional PII/NER/chunking services are
+  covered in [AI Integration](ai-integration).
 
 The frontend desktop application communicates with the backend through
 `frontend_desktop/api_client.py`, which wraps `requests` with timeout handling
 and user-friendly error messages.
 
-## Search Subsystem
+## Search and AI Details
 
-The search subsystem lives in `backend/core/` and has three layers:
-
-**Filename search** ([@file-search-optimized]) uses `os.scandir()` instead of
-`os.walk()` for faster I/O. It compiles regex patterns once per search, scans
-directories recursively, and supports cancellation via `threading.Event`. The
-class is named `OptimizedFileSearch` with `FileSearch` as a backward-compatible
-alias.
-
-**SQLite caching** ([@file-index]) stores file metadata in `.cache/file_index.db`
-with a 1-hour TTL. Cache hits skip filesystem scanning entirely. The cache is
-indexed by folder, filename (case-insensitive), and extension. Cache entries
-expire based on `indexed_at` timestamps.
-
-**Content search** ([@content-search]) searches text within file contents using a
-`ThreadPoolExecutor`. It processes files concurrently and supports cancellation.
-
-## Search History
-
-`SearchHistory` ([@search-history]) persists recent searches in
-`.cache/search_history.db`. It deduplicates by keywords + folders, tracks
-`search_count`, and trims to `max_history` (default 20) entries by
-`last_used_at`.
+The search internals (filename, content, and natural-language search, SQLite
+caching, and search history) live on [Search Subsystem](search), and the Ollama
+client, model warmup, fallback chains, and usage tracking live on
+[AI Integration](ai-integration). This page documents the request lifecycle,
+logging, and configuration shared across all endpoints.
 
 ## Logging
 

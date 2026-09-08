@@ -95,7 +95,8 @@ methods for all backend endpoints:
 - `analyze_batch()` — uploads and analyzes 2-100 files (360s timeout).
 - `ocr_from_image()` — extracts text from images via vision models.
 - Search history CRUD: `get_search_history()`, `rerun_search()`,
-  `delete_search_history()`.
+  `delete_search_history()`. These map to the endpoints documented in
+  [API Endpoints](../reference/api-endpoints).
 
 Error responses from the backend include `error_code` fields that the client
 maps to user-friendly messages.
