@@ -58,7 +58,7 @@ ollama pull deepseek-ocr      # Vision/OCR (~3 GB, 97% accuracy)
 The backend selects models from a hardcoded list in `OllamaClient.MODELS`
 rather than from `OLLAMA_MODEL`: phi4-mini is the primary general model,
 qwen3:4b-instruct is the fallback, and deepseek-ocr handles vision. Only
-phi4-mini and deepseek-ocr are warmed on startup, so those two must be pulled.
+phi4-mini is warmed on startup (the `general` model in `OllamaClient.MODELS`), so it must be pulled for warmup to succeed; deepseek-ocr is invoked on demand for OCR and must also be pulled, but it is not pre-warmed.
 
 Total model storage: ~5.5 GB. Ollama runs as a Windows background service
 automatically after installation. See CLAUDE.md ([@claudem]) for model
