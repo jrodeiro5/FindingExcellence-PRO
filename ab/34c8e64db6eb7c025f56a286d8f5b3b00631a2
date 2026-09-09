@@ -1,0 +1,19 @@
+almanac/guides/setup.md
+  s_cb6498ac4b7cc3::t_21363ca4c4f3af 61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "ab34c8e64db6eb7c025f56a286d8f5b3b00631a2",
+  "prompts": {},
+  "sessions": {
+    "s_cb6498ac4b7cc3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0871a-abb0-7b63-850d-20e043c0fead",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
