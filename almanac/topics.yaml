@@ -3,11 +3,6 @@ title: Topic Graph
 ---
 
 topics:
-  - slug: concepts
-    title: Concepts
-    description: Core vocabulary and mental models for FindingExcellence PRO
-    parents: []
-
   - slug: architecture
     title: Architecture
     description: System architecture and subsystem boundaries

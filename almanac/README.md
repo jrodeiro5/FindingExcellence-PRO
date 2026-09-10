@@ -1,6 +1,6 @@
 ---
 title: FindingExcellence PRO Wiki
-topics: [concepts, architecture]
+topics: [architecture]
 ---
 
 # FindingExcellence PRO Wiki
