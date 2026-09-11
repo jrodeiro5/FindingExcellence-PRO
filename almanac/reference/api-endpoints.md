@@ -13,7 +13,9 @@ All endpoints are under the `/api/` prefix. The backend runs on
 `http://localhost:8000/docs`.
 
 The backend defines all endpoints in `backend/main.py` ([@main-py]) using
-FastAPI route decorators. The desktop frontend communicates through
+FastAPI route decorators; the request lifecycle and process ownership
+behind them are covered in [Backend Server](../backend). The desktop
+frontend communicates through
 `frontend_desktop/api_client.py` ([@api-client]), which wraps `requests` with
 timeout handling and user-friendly error mapping.
 

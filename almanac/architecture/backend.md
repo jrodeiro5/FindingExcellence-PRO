@@ -50,6 +50,9 @@ The backend exposes two categories of endpoints:
   Ollama client, model warmup, and optional PII/NER/chunking services are
   covered in [AI Integration](ai-integration).
 
+The exact request and response contracts for every endpoint are documented
+in [API Endpoints](../reference/api-endpoints).
+
 The frontend desktop application communicates with the backend through
 `frontend_desktop/api_client.py`, which wraps `requests` with timeout handling
 and user-friendly error messages.
