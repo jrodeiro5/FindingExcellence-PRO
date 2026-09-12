@@ -1,0 +1,19 @@
+almanac/reference/api-endpoints.md
+  s_5377aae7ff6441::t_e1d5ee465cd1ce 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9a9e1310a91d4ec86a075ccf08d7dd4b30a70cf0",
+  "prompts": {},
+  "sessions": {
+    "s_5377aae7ff6441": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a096c6-0617-7860-b053-4b1192f071a6",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
