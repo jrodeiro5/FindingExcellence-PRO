@@ -34,6 +34,8 @@ The frontend has two execution paths for file search:
    can use the backend's search endpoints for features like natural language
    search.
 
+   [Search Subsystem](search) documents the search internals the desktop calls.
+
 The frontend checks backend health on startup via `BackendClient.health_check()`
 and degrades gracefully if the backend is offline.
 
