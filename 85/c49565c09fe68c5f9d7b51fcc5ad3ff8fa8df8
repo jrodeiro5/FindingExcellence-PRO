@@ -1,0 +1,19 @@
+almanac/architecture/frontend.md
+  s_09b1205e3c1635::t_9b19eed93527c9 37-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "85c49565c09fe68c5f9d7b51fcc5ad3ff8fa8df8",
+  "prompts": {},
+  "sessions": {
+    "s_09b1205e3c1635": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a5db-3228-7ad2-a979-a7e0eb5fc602",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
