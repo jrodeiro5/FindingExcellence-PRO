@@ -1,0 +1,23 @@
+almanac/architecture/ai-integration.md
+  s_f0eeb556cdbf08::t_e0235772447a0c 115-120
+almanac/architecture/frontend.md
+  s_f0eeb556cdbf08::t_e0235772447a0c 37-38
+almanac/architecture/search.md
+  s_f0eeb556cdbf08::t_e0235772447a0c 101-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "436165d1a3468224afc4b82ac62b90ad50a5801a",
+  "prompts": {},
+  "sessions": {
+    "s_f0eeb556cdbf08": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0b014-c1c2-7db0-84f3-7bda94720028",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
