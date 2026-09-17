@@ -98,6 +98,9 @@ search parameters using the LLM. The system:
 3. Filters out generic keywords (file, document, data, report, etc.).
 4. Runs a standard filename search with the parsed parameters.
 
+The natural-language parsing is implemented in [AI Integration](ai-integration),
+and these endpoints are documented in [API Endpoints](../reference/api-endpoints).
+
 ## Search History
 
 `SearchHistory` ([@search-history]) persists recent searches in

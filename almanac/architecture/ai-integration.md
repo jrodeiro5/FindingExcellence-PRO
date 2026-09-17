@@ -112,3 +112,9 @@ when the dependency is missing.
 Each file is extracted and analyzed independently; failed files are recorded
 with errors. A consolidated summary across all files is generated at the end.
 Temp files are cleaned up in a `finally` block.
+
+## Related
+
+The AI layer is hosted by the [Backend Server](backend) and exists to satisfy
+the [Local-First Privacy](../decisions/local-first) decision: all inference
+stays on the user's machine.
