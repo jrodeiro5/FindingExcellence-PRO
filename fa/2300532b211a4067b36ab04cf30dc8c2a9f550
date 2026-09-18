@@ -1,0 +1,19 @@
+AGENTS.md
+  s_c5a3a8a9a33f06::t_7902b537cfe3b4 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "fa2300532b211a4067b36ab04cf30dc8c2a9f550",
+  "prompts": {},
+  "sessions": {
+    "s_c5a3a8a9a33f06": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f4a60d131ffexsr0YfZVt4xlAp",
+        "model": "muse-spark-1.3-contributor-free"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
