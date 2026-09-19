@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.svg" alt="FindingExcellence-PRO" height="96"></p>
+
 <div align="center">
 
 [![Ayesa Header](.github/Cabecera-Ayesa%20v2.jpg)](https://www.ayesa.com)
