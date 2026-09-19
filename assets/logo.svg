@@ -1,45 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 834 240" width="834" height="240" role="img" aria-label="FindingExcellence-PRO"><title>FindingExcellence-PRO</title><style>.f{fill:#eceef3}.fd{fill:#eceef3;opacity:.3}.a{fill:currentColor}
-.fs,.as,.fds{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.fs{stroke:#eceef3}.fds{stroke:#eceef3;opacity:.3}.as{stroke:currentColor}
-.pulse,.eq,.bob,.turn,.slide,.fall,.scan,.scrub,.swap,.lit,.ripple,.wig,.grow,.cc{transform-box:fill-box;transform-origin:center}
-.spin,.rspin{transform-box:view-box;transform-origin:120px 120px}
-.wig,.grow{transform-origin:50% 100%}
-.chop{transform-box:view-box;transform-origin:184px 104px}
-.spin{animation:spin 12s linear infinite}.rspin{animation:spin 8s linear infinite reverse}
-.pulse{animation:pulse 2.4s ease-in-out infinite}
-.blink{animation:blink 1.6s steps(1) infinite}
-.eq{animation:eq 1.6s ease-in-out infinite}
-.bob{animation:bob 2.4s ease-in-out infinite}
-.slide{animation:slide 3s ease-in-out infinite}
-.draw{stroke-dasharray:100;animation:draw 4s ease-in-out infinite}
-.ripple{animation:ripple 3s ease-out infinite}
-.lit{animation:lit 3s ease-in-out infinite}
-.turn{animation:turn 4s ease-in-out infinite}
-.scan{animation:scan 3.2s ease-in-out infinite}
-.scrub{animation:scrub 4s linear infinite}
-.swap{animation:swap 4s ease-in-out infinite}
-.fall{animation:fall 2.4s ease-in infinite}
-.wig{animation:wig 1.2s ease-in-out infinite}
-.grow{animation:grow 3s ease-in-out infinite}
-.chop{animation:chop 2.2s ease-in-out infinite}
-.cc{animation:cc 8s infinite backwards}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{50%{transform:scale(1.28)}}
-@keyframes blink{50%{opacity:.15}}
-@keyframes eq{50%{transform:scaleY(.35)}}
-@keyframes bob{50%{transform:translateY(-9px)}}
-@keyframes slide{50%{transform:translateX(var(--d,28px))}}
-@keyframes draw{0%,10%{stroke-dashoffset:100}40%,85%{stroke-dashoffset:0}100%{stroke-dashoffset:100}}
-@keyframes ripple{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.5);opacity:0}}
-@keyframes lit{0%{opacity:0}10%,30%{opacity:1}45%,100%{opacity:0}}
-@keyframes turn{50%{transform:scaleX(.12)}}
-@keyframes scan{0%{transform:translateY(0);opacity:0}15%,80%{opacity:1}100%{transform:translateY(104px);opacity:0}}
-@keyframes scrub{from{transform:translateX(0)}to{transform:translateX(104px)}}
-@keyframes swap{0%,20%{transform:none}45%,70%{transform:translateX(var(--d))}95%,100%{transform:none}}
-@keyframes fall{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(90px);opacity:0}}
-@keyframes wig{50%{transform:rotate(16deg)}}
-@keyframes grow{0%{transform:scaleY(.15)}55%,100%{transform:scaleY(1)}}
-@keyframes chop{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-16deg)}80%{transform:rotate(3deg)}}
-@keyframes cc{0%{opacity:0}4%,22%{opacity:1}26%,100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}
-.w{fill:#12141a}@media (prefers-color-scheme:dark){.w{fill:#eceef3}}</style><rect x="20" y="20" width="200" height="200" rx="52" fill="#12141a"/><g style="color:#ffb02e"><rect x="64" y="68" width="20" height="20" rx="5" class="fd" /><rect x="92" y="68" width="20" height="20" rx="5" class="fd" /><rect x="120" y="68" width="20" height="20" rx="5" class="fd" /><rect x="64" y="96" width="20" height="20" rx="5" class="fd" /><rect x="92" y="96" width="20" height="20" rx="5" class="fd" /><rect x="120" y="96" width="20" height="20" rx="5" class="fd" /><rect x="64" y="124" width="20" height="20" rx="5" class="fd" /><rect x="92" y="124" width="20" height="20" rx="5" class="fd" /><rect x="120" y="124" width="20" height="20" rx="5" class="fd" /><g class="bob"><path d="M153.8 153.8 L187.8 187.8" class="as" stroke-width="12" /><circle cx="130" cy="130" r="28" class="fs" stroke-width="10"/><circle cx="130" cy="124" r="6" class="a" /><rect x="127" y="126" width="6" height="12" rx="2" class="a" /></g></g><path d="M259.1 135.8V103.7H279.8V109.9H265.6V117.0H278.6V123.2H265.7V135.8Z M285.5 135.8V129.9H293.5V117.6H286.4V111.6H300.1V129.9H307.0V135.8ZM296.5 107.8Q294.7 107.8 293.6 106.9Q292.5 106.0 292.5 104.4Q292.5 102.8 293.6 101.9Q294.7 100.9 296.5 100.9Q298.3 100.9 299.4 101.9Q300.4 102.8 300.4 104.4Q300.4 106.0 299.4 106.9Q298.3 107.8 296.5 107.8Z M311.7 135.8V111.6H318.1V116.0Q318.6 113.8 320.3 112.5Q322.1 111.2 324.6 111.2Q328.1 111.2 330.2 113.7Q332.4 116.1 332.4 120.2V135.8H325.8V120.9Q325.8 119.0 324.8 118.0Q323.8 116.9 322.0 116.9Q320.3 116.9 319.3 118.0Q318.3 119.0 318.3 120.9V135.8Z M345.7 136.3Q342.2 136.3 340.0 133.7Q337.8 131.1 337.8 126.8V120.7Q337.8 116.3 340.0 113.8Q342.2 111.2 345.7 111.2Q348.1 111.2 349.8 112.4Q351.5 113.6 352.3 115.9L352.1 110.3V103.7H358.7V135.8H352.3V131.5Q351.5 133.8 349.8 135.0Q348.1 136.3 345.7 136.3ZM348.2 130.6Q350.1 130.6 351.1 129.5Q352.1 128.4 352.1 126.4V121.1Q352.1 119.1 351.1 118.0Q350.1 116.9 348.2 116.9Q346.4 116.9 345.4 117.9Q344.4 118.9 344.4 120.9V126.6Q344.4 128.5 345.4 129.5Q346.4 130.6 348.2 130.6Z M364.7 135.8V129.9H372.7V117.6H365.6V111.6H379.3V129.9H386.2V135.8ZM375.7 107.8Q373.9 107.8 372.8 106.9Q371.7 106.0 371.7 104.4Q371.7 102.8 372.8 101.9Q373.9 100.9 375.7 100.9Q377.5 100.9 378.6 101.9Q379.6 102.8 379.6 104.4Q379.6 106.0 378.6 106.9Q377.5 107.8 375.7 107.8Z M390.9 135.8V111.6H397.3V116.0Q397.8 113.8 399.5 112.5Q401.3 111.2 403.8 111.2Q407.3 111.2 409.4 113.7Q411.6 116.1 411.6 120.2V135.8H405.0V120.9Q405.0 119.0 404.0 118.0Q403.0 116.9 401.2 116.9Q399.5 116.9 398.5 118.0Q397.5 119.0 397.5 120.9V135.8Z M420.8 143.8V138.5H427.6Q429.4 138.5 430.4 137.6Q431.4 136.6 431.4 135.0V134.1L431.5 130.5Q430.6 132.4 429.0 133.5Q427.3 134.5 425.1 134.5Q421.4 134.5 419.2 132.0Q417.0 129.4 417.0 125.1V120.7Q417.0 116.3 419.2 113.8Q421.4 111.2 425.1 111.2Q427.4 111.2 429.0 112.3Q430.6 113.4 431.5 115.3V111.6H437.9V135.2Q437.9 139.2 435.2 141.5Q432.5 143.8 427.8 143.8ZM427.5 128.8Q429.3 128.8 430.3 127.8Q431.3 126.7 431.3 124.8V120.9Q431.3 119.0 430.3 118.0Q429.3 116.9 427.5 116.9Q425.6 116.9 424.6 118.0Q423.6 119.0 423.6 120.9V124.8Q423.6 126.7 424.6 127.8Q425.6 128.8 427.5 128.8Z M444.3 135.8V103.7H464.1V109.4H450.8V116.7H462.6V122.1H450.8V130.1H464.1V135.8Z M468.3 135.8 476.7 123.3 468.9 111.6H476.3L479.3 116.5Q479.6 117.1 479.9 117.8Q480.2 118.5 480.4 118.9Q480.6 118.5 480.9 117.8Q481.2 117.1 481.5 116.5L484.5 111.6H491.9L484.1 123.3L492.5 135.8H485.1L481.6 130.1Q481.2 129.5 480.9 128.8Q480.6 128.1 480.4 127.7Q480.2 128.1 479.9 128.8Q479.6 129.5 479.3 130.1L475.7 135.8Z M507.2 136.3Q504.0 136.3 501.6 135.1Q499.1 133.9 497.8 131.7Q496.5 129.5 496.5 126.6V120.9Q496.5 117.9 497.8 115.8Q499.1 113.6 501.6 112.4Q504.0 111.2 507.2 111.2Q512.0 111.2 514.9 113.6Q517.7 116.0 517.9 120.2H511.5Q511.3 118.7 510.2 117.8Q509.0 116.9 507.2 116.9Q505.2 116.9 504.2 117.9Q503.1 118.9 503.1 120.9V126.6Q503.1 128.5 504.2 129.5Q505.2 130.6 507.2 130.6Q509.0 130.6 510.2 129.7Q511.3 128.8 511.5 127.3H517.9Q517.7 131.4 514.9 133.9Q512.0 136.3 507.2 136.3Z M533.2 136.3Q530.0 136.3 527.6 135.1Q525.2 133.9 523.9 131.7Q522.6 129.5 522.6 126.6V120.9Q522.6 118.0 523.9 115.8Q525.2 113.6 527.6 112.4Q530.0 111.2 533.2 111.2Q536.5 111.2 538.8 112.4Q541.2 113.6 542.5 115.8Q543.8 118.0 543.8 120.9V125.4H528.9V126.6Q528.9 128.9 530.0 129.9Q531.1 131.0 533.2 131.0Q534.7 131.0 535.7 130.6Q536.8 130.1 536.9 129.2H543.4Q542.7 132.4 539.9 134.3Q537.2 136.3 533.2 136.3ZM528.9 120.9V121.5L537.5 121.4V120.8Q537.5 118.5 536.4 117.3Q535.4 116.1 533.2 116.1Q531.1 116.1 530.0 117.4Q528.9 118.6 528.9 120.9Z M563.8 135.8Q561.2 135.8 559.3 134.8Q557.4 133.7 556.3 131.7Q555.2 129.8 555.2 127.3V109.7H547.5V103.7H561.8V127.0Q561.8 128.3 562.5 129.1Q563.3 129.9 564.4 129.9H571.3V135.8Z M590.2 135.8Q587.6 135.8 585.7 134.8Q583.8 133.7 582.7 131.7Q581.6 129.8 581.6 127.3V109.7H573.9V103.7H588.2V127.0Q588.2 128.3 588.9 129.1Q589.7 129.9 590.8 129.9H597.7V135.8Z M612.4 136.3Q609.2 136.3 606.8 135.1Q604.4 133.9 603.1 131.7Q601.8 129.5 601.8 126.6V120.9Q601.8 118.0 603.1 115.8Q604.4 113.6 606.8 112.4Q609.2 111.2 612.4 111.2Q615.7 111.2 618.0 112.4Q620.4 113.6 621.7 115.8Q623.0 118.0 623.0 120.9V125.4H608.1V126.6Q608.1 128.9 609.2 129.9Q610.3 131.0 612.4 131.0Q613.9 131.0 614.9 130.6Q616.0 130.1 616.1 129.2H622.6Q621.9 132.4 619.1 134.3Q616.4 136.3 612.4 136.3ZM608.1 120.9V121.5L616.7 121.4V120.8Q616.7 118.5 615.6 117.3Q614.6 116.1 612.4 116.1Q610.3 116.1 609.2 117.4Q608.1 118.6 608.1 120.9Z M628.5 135.8V111.6H634.9V116.0Q635.4 113.8 637.1 112.5Q638.9 111.2 641.4 111.2Q644.9 111.2 647.0 113.7Q649.2 116.1 649.2 120.2V135.8H642.6V120.9Q642.6 119.0 641.6 118.0Q640.6 116.9 638.8 116.9Q637.1 116.9 636.1 118.0Q635.1 119.0 635.1 120.9V135.8Z M665.6 136.3Q662.4 136.3 660.0 135.1Q657.5 133.9 656.2 131.7Q654.9 129.5 654.9 126.6V120.9Q654.9 117.9 656.2 115.8Q657.5 113.6 660.0 112.4Q662.4 111.2 665.6 111.2Q670.4 111.2 673.3 113.6Q676.1 116.0 676.3 120.2H669.9Q669.7 118.7 668.6 117.8Q667.4 116.9 665.6 116.9Q663.6 116.9 662.6 117.9Q661.5 118.9 661.5 120.9V126.6Q661.5 128.5 662.6 129.5Q663.6 130.6 665.6 130.6Q667.4 130.6 668.6 129.7Q669.7 128.8 669.9 127.3H676.3Q676.1 131.4 673.3 133.9Q670.4 136.3 665.6 136.3Z M691.6 136.3Q688.4 136.3 686.0 135.1Q683.6 133.9 682.3 131.7Q681.0 129.5 681.0 126.6V120.9Q681.0 118.0 682.3 115.8Q683.6 113.6 686.0 112.4Q688.4 111.2 691.6 111.2Q694.9 111.2 697.2 112.4Q699.6 113.6 700.9 115.8Q702.2 118.0 702.2 120.9V125.4H687.3V126.6Q687.3 128.9 688.4 129.9Q689.5 131.0 691.6 131.0Q693.1 131.0 694.1 130.6Q695.2 130.1 695.3 129.2H701.8Q701.1 132.4 698.3 134.3Q695.6 136.3 691.6 136.3ZM687.3 120.9V121.5L695.9 121.4V120.8Q695.9 118.5 694.8 117.3Q693.8 116.1 691.6 116.1Q689.5 116.1 688.4 117.4Q687.3 118.6 687.3 120.9Z M734.1 135.8V103.7H745.1Q748.4 103.7 751.0 105.0Q753.5 106.3 754.9 108.6Q756.3 110.8 756.3 113.9Q756.3 117.0 754.9 119.3Q753.5 121.6 751.0 122.9Q748.4 124.1 745.1 124.1H740.7V135.8ZM740.7 118.4H745.1Q747.2 118.4 748.4 117.1Q749.7 115.9 749.7 113.9Q749.7 112.0 748.4 110.7Q747.2 109.4 745.1 109.4H740.7Z M760.5 135.8V103.7H770.8Q774.2 103.7 776.7 104.9Q779.2 106.1 780.6 108.3Q782.0 110.5 782.0 113.5Q782.0 116.6 780.5 119.1Q779.0 121.5 776.4 122.6L782.5 135.8H775.3L770.1 123.7H767.0V135.8ZM767.0 118.0H770.8Q773.0 118.0 774.2 116.9Q775.4 115.8 775.4 113.8Q775.4 111.7 774.2 110.6Q773.0 109.4 770.8 109.4H767.0Z M797.2 136.3Q792.4 136.3 789.5 133.6Q786.6 130.8 786.6 126.2V113.4Q786.6 108.7 789.5 106.0Q792.4 103.3 797.2 103.3Q802.0 103.3 804.9 106.0Q807.8 108.7 807.8 113.4V126.2Q807.8 130.8 804.9 133.6Q802.0 136.3 797.2 136.3ZM797.2 130.6Q801.2 130.6 801.2 126.6V113.0Q801.2 109.0 797.2 109.0Q793.2 109.0 793.2 113.0V126.6Q793.2 130.6 797.2 130.6Z" class="w"/><path d="M711.0 124.4V118.2H725.0V124.4Z" style="fill:#ffb02e"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="FindingExcellence-PRO">
+<title>FindingExcellence-PRO — local AI inside the lens</title>
+<!-- AI spark -->
+<polygon points="100,62 110,95 143,105 110,115 100,148 90,115 57,105 90,95" fill="#FFB02E">
+<animate attributeName="opacity" values="1;.65;1" dur="2.4s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1"/>
+</polygon>
+<!-- local data dots -->
+<circle cx="76" cy="146" r="7" fill="#64748B"/><circle cx="124" cy="146" r="7" fill="#64748B"/>
+<!-- lens + handle -->
+<circle cx="100" cy="105" r="56" fill="none" stroke="#475569" stroke-width="12"/>
+<line x1="141" y1="146" x2="187" y2="192" stroke="#FFB02E" stroke-width="14" stroke-linecap="round"/>
+</svg>
