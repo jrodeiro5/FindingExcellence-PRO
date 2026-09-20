@@ -1,0 +1,19 @@
+README.md
+  s_ae34bb2dad814b::t_0dc5d7b17292ae 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2423042d5905e14c94f061afa90e5d0c1fc60e94",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bb2dad814b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f450bf0efffexouhPCFU8L4a9X",
+        "model": "muse-spark-1.3-contributor"
+      },
+      "human_author": "jrodeiro5 <jrodeiro.dev@gmail.com>"
+    }
+  }
+}
