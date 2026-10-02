@@ -8,6 +8,8 @@ sources:
   - {id: env-example, type: file, path: .env.example}
   - {id: start-bat, type: file, path: start.bat}
   - {id: stop-bat, type: file, path: stop.bat}
+  - {id: ollama-client, type: file, path: backend/ai/ollama_client.py}
+  - {id: ai-services, type: file, path: backend/ai/ai_services.py}
 ---
 
 # Setup and Configuration
@@ -59,6 +61,14 @@ The backend selects models from a hardcoded list in `OllamaClient.MODELS`
 rather than from `OLLAMA_MODEL`: phi4-mini is the primary general model,
 qwen3:4b-instruct is the fallback, and deepseek-ocr handles vision. Only
 phi4-mini is warmed on startup (the `general` model in `OllamaClient.MODELS`), so it must be pulled for warmup to succeed; deepseek-ocr is invoked on demand for OCR and must also be pulled, but it is not pre-warmed.
+
+`OLLAMA_FAST_MODEL` (documented in `.env.example` as `deepseek-r1:1.5b`) is
+not read by the code. Natural-language parsing instead calls
+`OllamaClient.MODELS["general_fast"]`, which is hardcoded to `phi4-mini`
+([@ollama-client], [@ai-services]). `OLLAMA_MODEL` and `OLLAMA_VISION_MODEL`
+in `.env.example` are likewise ignored: all model selection comes from the
+hardcoded `MODELS` dict, so to change which model handles a request, edit
+`MODELS`, not `.env`.
 
 Total model storage: ~5.5 GB. Ollama runs as a Windows background service
 automatically after installation. See CLAUDE.md ([@claudem]) for model
