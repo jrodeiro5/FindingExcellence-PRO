@@ -15,7 +15,7 @@ pdfplumber>=0.11.0
 PyMuPDF>=1.24.0
 
 # Image Processing (for Ollama vision models)
-Pillow>=12.2.0
+Pillow>=13.0.0
 
 # AI Integration - Local Ollama (100% privacy, no external APIs)
 requests>=2.33.0
